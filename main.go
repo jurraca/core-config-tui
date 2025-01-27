@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	
 	"github.com/charmbracelet/huh"
 )
 
 var (
 	datadir     string
-	testnet     bool
+	network     string
 	rpcuser     string
 	rpcpassword string
 	rpcport     string
@@ -22,26 +21,30 @@ var (
 	prune       string
 )
 
-func main() {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		homeDir = "."
-	}
-	defaultDataDir := filepath.Join(homeDir, ".bitcoin")
-
+func main() {	
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Bitcoin Data Directory").
 				Description("Directory to store blockchain data").
-				Value(&datadir).
-				Default(defaultDataDir),
+				Value(&datadir),
+
+			huh.NewSelect[string]().
+				Title("Select Network").
+				Description("The network to run bitcoin on.").
+				Options(
+					huh.NewOption("mainnet", "mainnet"),
+					huh.NewOption("testnet", "testnet"),
+					huh.NewOption("regtest", "regtest"),
+					huh.NewOption("signet", "signet"),
+				).
+			  Value(&network),
 
 			huh.NewConfirm().
-				Title("Enable Testnet?").
-				Description("Run on Bitcoin's test network").
-				Value(&testnet),
-
+				Title("Enable Server?").
+				Description("Accept command-line and JSON-RPC commands").
+				Value(&server),
+					
 			huh.NewInput().
 				Title("RPC Username").
 				Description("Username for JSON-RPC connections").
@@ -55,19 +58,12 @@ func main() {
 			huh.NewInput().
 				Title("RPC Port").
 				Description("Port for RPC connections (default: 8332)").
-				Value(&rpcport).
-				Default("8332"),
+				Value(&rpcport),
 
 			huh.NewInput().
 				Title("Max Connections").
 				Description("Max peer connections (default: 125)").
-				Value(&maxconnections).
-				Default("125"),
-
-			huh.NewConfirm().
-				Title("Enable Server?").
-				Description("Accept command-line and JSON-RPC commands").
-				Value(&server),
+				Value(&maxconnections),
 
 			huh.NewConfirm().
 				Title("Enable Transaction Index?").
@@ -77,12 +73,11 @@ func main() {
 			huh.NewInput().
 				Title("Prune Blockchain").
 				Description("Reduce storage (0 for no pruning, >=550 for MB to retain)").
-				Value(&prune).
-				Default("0"),
+				Value(&prune),
 		),
 	)
 
-	err = form.Run()
+	err := form.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -101,7 +96,7 @@ func main() {
 datadir=%s
 
 # Network
-testnet=%v
+%s
 
 # RPC Settings
 rpcuser=%s
@@ -117,7 +112,7 @@ txindex=%v
 
 # Storage Settings
 prune=%s
-`, datadir, boolToInt(testnet), rpcuser, rpcpassword, rpcport, 
+`, datadir, handleNetwork(network), rpcuser, rpcpassword, rpcport, 
    boolToInt(server), maxconnections, boolToInt(txindex), prune)
 
 	_, err = f.WriteString(config)
@@ -131,4 +126,19 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+func handleNetwork(network string) string {
+	switch network {
+	case "mainnet":
+		return "chain=mainnet"
+	case "testnet":
+		return "chain=testnet"
+	case "regtest":
+		return "chain=regtest"
+	case "signet":
+		return "chain=testnet\nsignet=1"
+	default:
+		return ""
+	}
 }
