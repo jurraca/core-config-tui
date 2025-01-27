@@ -22,21 +22,13 @@ type Config struct {
 }
 
 var (
-	datadir     string
-	network     string
-	rpcuser     string
-	rpcpassword string
-	rpcport     string
-	maxconnections string
-	server      bool
-	txindex     bool
-	prune       string
-)
-
-var (
 	datadir          string
 	network          string
 	server           bool
+	rpcuser          string
+	rpcpassword      string
+	rpcport          string
+	maxconnections   string
 	includeConf      string
 	loadBlock        string
 	maxMempool       string
@@ -67,8 +59,9 @@ func main() {
 				Title("Select Network").
 				Description("The network to run bitcoin on.").
 				Options(
-					huh.NewOption("mainnet", "mainnet"),
-					huh.NewOption("testnet", "testnet"),
+					huh.NewOption("mainnet", "main"),
+					huh.NewOption("testnet", "test"),
+					huh.NewOption("testnet4", "testnet4"),
 					huh.NewOption("regtest", "regtest"),
 					huh.NewOption("signet", "signet"),
 				).
@@ -80,8 +73,8 @@ func main() {
 				Value(&includeConf),
 
 			huh.NewInput().
-				Title("Load Block").
-				Description("Imports blocks from external file on startup").
+				Title("loadblock").
+				Description("External filepath to import blocks from on startup").
 				Value(&loadBlock),
 
 			huh.NewInput().
@@ -111,7 +104,7 @@ func main() {
 
 			huh.NewConfirm().
 				Title("Use Legacy Mempool Format").
-				Description("Whether a mempool.dat file will be written in the legacy format (version 1) or current format (version 2)").
+				Description("Whether a mempool.dat file created by -persistmempool or the savemempool RPC will be written in the legacy format (version 1) or current format (version 2). This temporary option will be removed in the future. (default: 0)").
 				Value(&persistMempoolV1),
 
 			huh.NewInput().
@@ -131,7 +124,7 @@ func main() {
 
 			huh.NewConfirm().
 				Title("Reindex Chainstate").
-				Description("Rebuild chain state from block files").
+				Description("If enabled, wipe chain state, and rebuild it from blk*.dat files on disk. If an assumeutxo snapshot was loaded, its chainstate will be wiped as well. The snapshot can then be reloaded via RPC.").
 				Value(&reindexChainstate),
 
 			huh.NewInput().
@@ -141,7 +134,7 @@ func main() {
 
 			huh.NewInput().
 				Title("Shutdown Notify Command").
-				Description("Execute command before shutdown").
+				Description("Execute command immediately before beginning shutdown.").
 				Value(&shutdownNotify),
 
 			huh.NewInput().
@@ -174,16 +167,11 @@ func main() {
 				Description("Max peer connections (default: 125)").
 				Value(&maxconnections),
 
-			huh.NewConfirm().
-				Title("Enable Transaction Index?").
-				Description("Maintain a full transaction index").
-				Value(&txindex),
-
 			huh.NewInput().
 				Title("Prune Blockchain").
 				Description("Reduce storage (0 for no pruning, >=550 for MB to retain)").
 				Value(&prune),
-		),
+		).Title("General Options"),
 	)
 
 	err := form.Run()
@@ -205,7 +193,7 @@ func main() {
 
 	cfg := Config{
 		DataDir:        datadir,
-		Network:        handleNetwork(network),
+		Network:        network,
 		RPCUser:        rpcuser,
 		RPCPassword:    rpcpassword,
 		RPCPort:        rpcport,
@@ -226,19 +214,4 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
-}
-
-func handleNetwork(network string) string {
-	switch network {
-	case "mainnet":
-		return "chain=mainnet"
-	case "testnet":
-		return "chain=testnet"
-	case "regtest":
-		return "chain=regtest"
-	case "signet":
-		return "chain=testnet\nsignet=1"
-	default:
-		return ""
-	}
 }
