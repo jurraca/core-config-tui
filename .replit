@@ -1,0 +1,19 @@
+entrypoint = "main.go"
+run = ["go", "run", "."]
+
+modules = ["go-1.21"]
+
+[env]
+GOPATH="$REPL_HOME/gopath"
+
+[nix]
+channel = "stable-24_05"
+
+[gitHubImport]
+requiredFiles = [".replit"]
+
+[deployment]
+build = "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o main"
+run = "./main"
+ignorePorts = false
+deploymentTarget = "gce"
