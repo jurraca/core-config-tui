@@ -9,6 +9,18 @@ import (
 	"github.com/charmbracelet/huh"
 )
 
+type Config struct {
+	DataDir        string
+	Network        string
+	RPCUser        string
+	RPCPassword    string
+	RPCPort        string
+	Server         bool
+	MaxConnections string
+	TxIndex        bool
+	Prune          string
+}
+
 var (
 	datadir     string
 	network     string
@@ -89,18 +101,6 @@ func main() {
 	}
 	defer f.Close()
 
-	type Config struct {
-		DataDir        string
-		Network        string
-		RPCUser        string
-		RPCPassword    string
-		RPCPort        string
-		Server         bool
-		MaxConnections string
-		TxIndex        bool
-		Prune          string
-	}
-
 	tmpl, err := template.ParseFiles("config.tmpl")
 	if err != nil {
 		log.Fatal(err)
@@ -119,11 +119,6 @@ func main() {
 	}
 
 	err = tmpl.Execute(f, cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = f.WriteString(config)
 	if err != nil {
 		log.Fatal(err)
 	}
