@@ -1,58 +1,72 @@
-
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"text/template"
-	
+
 	"github.com/charmbracelet/huh"
 )
 
 type Config struct {
-	DataDir        string
-	Network        string
-	RPCUser        string
-	RPCPassword    string
-	RPCPort        string
-	Server         bool
-	MaxConnections string
-	TxIndex        bool
-	Prune          string
+	DataDir           string
+	Network           string
+	RPCUser           string
+	RPCPassword       string
+	RPCPort           string
+	Server            bool
+	MaxConnections    string
+	TxIndex           bool
+	Prune             string
+	IncludeConf       string
+	LoadBlock         string
+	MaxMempool        string
+	MaxOrphanTx       string
+	MempoolExpiry     string
+	Par               string
+	PersistMempool    bool
+	PersistMempoolV1  bool
+	PID               string
+	Reindex           bool
+	ReindexChainstate bool
+	Settings          string
+	ShutdownNotify    string
+	StartupNotify     string
 }
 
 var (
-	datadir          string
-	network          string
-	server           bool
-	rpcuser          string
-	rpcpassword      string
-	rpcport          string
-	maxconnections   string
-	includeConf      string
-	loadBlock        string
-	maxMempool       string
-	maxOrphanTx      string
-	mempoolExpiry    string
-	par              string
-	persistMempool   bool
-	persistMempoolV1 bool
-	pid              string
-	prune            string
-	reindex          bool
+	datadir           string
+	network           string
+	server            bool
+	rpcuser           string
+	rpcpassword       string
+	rpcport           string
+	maxconnections    string
+	includeConf       string
+	loadBlock         string
+	maxMempool        string
+	maxOrphanTx       string
+	mempoolExpiry     string
+	par               string
+	persistMempool    bool
+	persistMempoolV1  bool
+	pid               string
+	prune             string
+	reindex           bool
 	reindexChainstate bool
-	settings         string
-	shutdownNotify   string
-	startupNotify    string
-	txindex          bool
+	settings          string
+	shutdownNotify    string
+	startupNotify     string
+	txindex           bool
 )
 
-func main() {	
+func main() {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Bitcoin Data Directory").
-				Description("Directory to store blockchain data").
+				Description("Directory to store blockchain data (defaults to ~/.bitcoin)").
 				Value(&datadir),
 
 			huh.NewSelect[string]().
@@ -65,8 +79,45 @@ func main() {
 					huh.NewOption("regtest", "regtest"),
 					huh.NewOption("signet", "signet"),
 				).
-			  	Value(&network),
+				Value(&network),
 
+			huh.NewConfirm().
+				Title("Transaction Index").
+				Description("Maintain a full transaction index, used by the getrawtransaction rpc call (default: No)").
+				Value(&txindex),
+			huh.NewInput().
+				Title("Prune").
+				Description("Prune the blockchain database. Possible values: \n 0 = disable pruning blocks (default),\n 1 = allow manual pruning via RPC,\n >=550 = automatically prune block files to stay under the specified target size in MiB").
+				Validate(func(v string) error {
+					if boolToInt(txindex) == 1 && v != "0" {
+						return fmt.Errorf("pruning is incompatible with txindex. If you want to use pruning, you must disable txindex.")
+					}
+					return nil
+				}).
+				Value(&prune),
+		).Title("Basics"),
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Enable Server").
+				Description("Accept command line and JSON-RPC commands").
+				Value(&server),
+
+			huh.NewInput().
+				Title("RPC Username").
+				Description("Username for JSON-RPC connections").
+				Value(&rpcuser),
+
+			huh.NewInput().
+				Title("RPC Password").
+				Description("Password for JSON-RPC connections").
+				Value(&rpcpassword),
+
+			huh.NewInput().
+				Title("RPC Port").
+				Description("Port for RPC connections (default: 8332)").
+				Value(&rpcport),
+		).Title("RPCs"),
+		huh.NewGroup(
 			huh.NewInput().
 				Title("Include Config").
 				Description("Specify additional configuration file, relative to the -datadir path").
@@ -142,26 +193,6 @@ func main() {
 				Description("Execute command on startup").
 				Value(&startupNotify),
 
-			huh.NewConfirm().
-				Title("Transaction Index").
-				Description("Maintain a full transaction index").
-				Value(&txindex),
-					
-			huh.NewInput().
-				Title("RPC Username").
-				Description("Username for JSON-RPC connections").
-				Value(&rpcuser),
-
-			huh.NewInput().
-				Title("RPC Password").
-				Description("Password for JSON-RPC connections").
-				Value(&rpcpassword),
-
-			huh.NewInput().
-				Title("RPC Port").
-				Description("Port for RPC connections (default: 8332)").
-				Value(&rpcport),
-
 			huh.NewInput().
 				Title("Max Connections").
 				Description("Max peer connections (default: 125)").
@@ -192,15 +223,29 @@ func main() {
 	}
 
 	cfg := Config{
-		DataDir:        datadir,
-		Network:        network,
-		RPCUser:        rpcuser,
-		RPCPassword:    rpcpassword,
-		RPCPort:        rpcport,
-		Server:         server,
-		MaxConnections: maxconnections,
-		TxIndex:        txindex,
-		Prune:          prune,
+		DataDir:           datadir,
+		Network:           network,
+		RPCUser:           rpcuser,
+		RPCPassword:       rpcpassword,
+		RPCPort:           rpcport,
+		Server:            server,
+		MaxConnections:    maxconnections,
+		TxIndex:           txindex,
+		Prune:             prune,
+		IncludeConf:       includeConf,
+		LoadBlock:         loadBlock,
+		MaxMempool:        maxMempool,
+		MaxOrphanTx:       maxOrphanTx,
+		MempoolExpiry:     mempoolExpiry,
+		Par:               par,
+		PersistMempool:    persistMempool,
+		PersistMempoolV1:  persistMempoolV1,
+		PID:               pid,
+		Reindex:           reindex,
+		ReindexChainstate: reindexChainstate,
+		Settings:          settings,
+		ShutdownNotify:    shutdownNotify,
+		StartupNotify:     startupNotify,
 	}
 
 	err = tmpl.Execute(f, cfg)
