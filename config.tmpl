@@ -22,7 +22,7 @@
 {{if .LoadBlock}}loadblock={{.LoadBlock}}{{else}}#loadblock=<file>{{end}}
 
 # Keep the transaction memory pool below <n> megabytes (default: 300)
-{{if .MaxMemPool}}maxmempool={{.MaxMemPool}}{{else}}#maxmempool=<n>{{end}}
+{{if .MaxMempool}}maxmempool={{.MaxMempool}}{{else}}#maxmempool=<n>{{end}}
 
 # Keep at most <n> unconnectable transactions in memory (default: 100)
 {{if .MaxOrphanTx}}maxorphantx={{.MaxOrphanTx}}{{else}}#maxorphantx=<n>{{end}}
@@ -519,7 +519,7 @@ chain={{.Network}}
 # then connects normally using the
 # rpcuser=<USERNAME>/rpcpassword=<PASSWORD> pair of arguments. This
 # option can be specified multiple times
-#rpcauth=<userpw>
+{{if .RPCAuth}}rpcauth={{.RPCAuth}}{{else}}#rpcauth=<userpw>
 
 # Bind to given address to listen for JSON-RPC connections. Do not expose
 # the RPC server to untrusted networks such as the public internet!
@@ -538,17 +538,17 @@ chain={{.Network}}
 #rpccookieperms=<readable-by>
 
 # Password for JSON-RPC connections
-{{if .RPCPassword}}rpcpassword={{.RPCPassword}}#rpcpassword=<pw>{{end}}
+{{if .RPCPassword}}rpcpassword={{.RPCPassword}}{{else}}#rpcpassword=<pw>{{end}}
 
 # Listen for JSON-RPC connections on <port> (default: 8332, testnet3:
 # 18332, testnet4: 48332, signet: 38332, regtest: 18443)
-{{if .RPCPort}}rpcport={{.RPCPort}}#rpcport=<port>{{end}}
+{{if .RPCPort}}rpcport={{.RPCPort}}{{else}}#rpcport=<port>{{end}}
 
 # Set the number of threads to service RPC calls (default: 16)
 #rpcthreads=<n>
 
 # Username for JSON-RPC connections
-{{if .RPCUser}}rpcuser={{.RPCUser}}{{else}}#rpcuser=<user>{{end}}
+#rpcuser=<user>
 
 
 # Set a whitelist to filter incoming RPC calls for a specific user. The
