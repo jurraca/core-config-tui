@@ -215,47 +215,15 @@ func (m Model) View() string {
 
 	switch m.form.State {
 	case huh.StateCompleted:
-    return m.CompletedMsg(s)
+    return m.CompletedMsg(*s)
 
 	default:
-
+    // Status (right side)
+    var status string
+    status = m.StatusBar(*s, *m.form, status)
 		// Form (left side)
 		v := strings.TrimSuffix(m.form.View(), "\n\n")
 		form := m.lg.NewStyle().Margin(1, 0).Render(v)
-
-		// Status (right side)
-		var status string
-		{
-			var (
-				datadir string
-				chain   string
-				txindex string
-			)
-
-			if m.form.GetString("datadir") != "" {
-				datadir = "Datadir: " + m.form.GetString("datadir") + "\n"
-			} else {
-				datadir = "Datadir: ~/.bitcoin" + "\n"
-			}
-			if m.form.GetString("chain") != "" {
-				chain = "Network: " + m.form.GetString("chain") + "\n"
-			}
-			if m.form.GetBool("txindex") != false {
-				txindex = "TxIndex: " + strconv.FormatBool(m.form.GetBool("txindex")) + "\n"
-			}
-
-			const statusWidth = 28
-			statusMarginLeft := m.width - statusWidth - lipgloss.Width(form) - s.Status.GetMarginRight()
-			status = s.Status.
-				Height(lipgloss.Height(form)).
-				Width(statusWidth).
-				MarginLeft(statusMarginLeft).
-				Render(s.StatusHeader.Render("Current Config") + "\n\n" +
-					datadir +
-					chain +
-					txindex + "\n",
-				)
-		}
 
 		errors := m.form.Errors()
 		header := m.appBoundaryView("Bitcoin Core Configuration")
@@ -301,6 +269,34 @@ func (m Model) appErrorBoundaryView(text string) string {
 	)
 }
 
+func (m Model) StatusBar(s Styles, form huh.Form, status string) string {
+    var (
+      datadir string
+      chain   string
+      txindex string
+    )
+
+    datadir = "Datadir: " + m.form.GetString("datadir") + "\n"
+    if m.form.GetString("chain") != "" {
+      chain = "Network: " + m.form.GetString("chain") + "\n"
+    }
+    if m.form.GetBool("txindex") != false {
+      txindex = "TxIndex: " + strconv.FormatBool(m.form.GetBool("txindex")) + "\n"
+    }
+
+    const statusWidth = 28
+    statusMarginLeft := m.width - statusWidth - lipgloss.Width(form) - s.Status.GetMarginRight()
+    return s.Status.
+      Height(lipgloss.Height(form)).
+      Width(statusWidth).
+      MarginLeft(statusMarginLeft).
+      Render(s.StatusHeader.Render("Current Config") + "\n\n" +
+        datadir +
+        chain +
+        txindex + "\n",
+      )
+  }
+  
 func (m Model) CompletedMsg(s Styles) string {
   var (
     b          strings.Builder
@@ -311,7 +307,7 @@ func (m Model) CompletedMsg(s Styles) string {
   datadirVal = s.Highlight.Render(m.form.GetString("datadir"))
   fmt.Fprintf(&b, "You've successfully generated a %s configuration file for Bitcoin core on the %s network.\n\n", s.Highlight.Render("bitcoin.conf"), chainVal)
   fmt.Fprintf(&b, "You should copy this file to the data directory: %s\n\n", datadirVal)
-  fmt.Fprint(&b, "The configuration file will contain ALL possible settings, and comments to help you make sense of them. Read them carefully before making changes.\n\n")
+  fmt.Fprint(&b, "The configuration file will contain examples of ALL possible settings, and comments to help you make sense of them. Read them carefully before making changes.\n\n")
   fmt.Fprintf(&b, "If you want to start over, you can always generate an example configuration with the %s script in the bitcoin repository.\n\n", s.Highlight.Render("contrib/devtools/gen-bitcoin-conf.sh"))
   fmt.Fprint(&b, "Good luck, anon ;)")
   return s.Status.Margin(0, 1).Padding(1, 2).Width(58).Render(b.String()) + "\n\n"
