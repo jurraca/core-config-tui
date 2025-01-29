@@ -19,11 +19,12 @@ type Config struct {
 	DataDir           string
 	Network           string
 	RPCAuth           string
+	RPCBind           string
 	RPCPort           string
 	RPCAllowIP        string
-	Server            bool
+	Server            int 
 	MaxConnections    string
-	TxIndex           bool
+	TxIndex           int
 	Prune             string
 	IncludeConf       string
 	LoadBlock         string
@@ -31,11 +32,11 @@ type Config struct {
 	MaxOrphanTx       string
 	MempoolExpiry     string
 	Par               string
-	PersistMempool    bool
-	PersistMempoolV1  bool
+	PersistMempool    int
+	PersistMempoolV1  int
 	Pid               string
-	Reindex           bool
-	ReindexChainstate bool
+	Reindex           int
+	ReindexChainstate int
 	Settings          string
 	ShutdownNotify    string
 	StartupNotify     string
@@ -44,7 +45,7 @@ type Config struct {
 var (
 	datadir           = "~/.bitcoin"
 	network           = "main"
-	server            = true 
+	server            = false 
 	rpcauth           string
 	rpcport           string
 	rpcallowip        string
@@ -169,8 +170,8 @@ func NewModel() Model {
     huh.NewGroup(
       huh.NewConfirm().
         Key("server").
-        Title("Enable Server").
-        Description("Accept command line and JSON-RPC commands").
+        Title("Enable RPC Server").
+        Description("Accept command line and JSON-RPC commands. (default: false)").
         Value(&server),
 
       huh.NewInput().
@@ -320,7 +321,7 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
     if m.form.GetBool("txindex") != false {
       txindex = "TxIndex enabled: " + strconv.FormatBool(m.form.GetBool("txindex")) + "\n"
     }
-    if m.form.GetBool("server") != true {
+    if m.form.GetBool("server") != false {
       server = "RPC server enabled: " + strconv.FormatBool(m.form.GetBool("server")) + "\n"
     }
     if m.form.GetString("rpcauth") != "" {
@@ -388,7 +389,8 @@ func writeConfig() {
       Network:           network,
       RPCAuth:           rpcauth,
       RPCPort:           rpcport,
-      Server:            server,
+      RPCBind:           rpcbind,
+      Server:            boolToInt(server),
       MaxConnections:    maxconnections,
       TxIndex:           boolToInt(txindex),
       Prune:             prune,
@@ -398,11 +400,11 @@ func writeConfig() {
       MaxOrphanTx:       maxOrphanTx,
       MempoolExpiry:     mempoolExpiry,
       Par:               par,
-      PersistMempool:    persistMempool,
-      PersistMempoolV1:  persistMempoolV1,
+      PersistMempool:    boolToInt(persistMempool),
+      PersistMempoolV1:  boolToInt(persistMempoolV1),
       Pid:               pid,
-      Reindex:           reindex,
-      ReindexChainstate: reindexChainstate,
+      Reindex:           boolToInt(reindex),
+      ReindexChainstate: boolToInt(reindexChainstate),
       Settings:          settings,
       ShutdownNotify:    shutdownNotify,
       StartupNotify:     startupNotify,
