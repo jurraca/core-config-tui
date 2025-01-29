@@ -171,7 +171,7 @@ version=1
 # Maintain at most <n> automatic connections to peers (default: 125). This
 # limit does not apply to connections manually added via -addnode
 # or the addnode RPC, which have a separate limit of 8.
-{{if .MaxConnections}}maxconnections={{.MaxConnections}}{{else}}{{#maxconnections=<n>}}{{end}}
+{{if .MaxConnections}}maxconnections={{.MaxConnections}}{{else}}#maxconnections=<n>{{end}}
 
 # Maximum per-connection receive buffer, <n>*1000 bytes (default: 5000)
 #maxreceivebuffer=<n>
