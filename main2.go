@@ -215,7 +215,7 @@ func (m Model) View() string {
 
 	switch m.form.State {
 	case huh.StateCompleted:
-    CompletedMsg(m, s)
+    return m.CompletedMsg(s)
 
 	default:
 
@@ -301,7 +301,7 @@ func (m Model) appErrorBoundaryView(text string) string {
 	)
 }
 
-func (m Model, s Styles) CompletedMsg() string {
+func (m Model) CompletedMsg(s Styles) string {
   var (
     b          strings.Builder
     chainVal   string
