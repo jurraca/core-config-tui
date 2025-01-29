@@ -18,9 +18,9 @@ const maxWidth = 100
 type Config struct {
 	DataDir           string
 	Network           string
-	RPCUser           string
-	RPCPassword       string
+	RPCAuth           string
 	RPCPort           string
+	RPCAllowIP        string
 	Server            bool
 	MaxConnections    string
 	TxIndex           bool
@@ -33,7 +33,7 @@ type Config struct {
 	Par               string
 	PersistMempool    bool
 	PersistMempoolV1  bool
-	PID               string
+	Pid               string
 	Reindex           bool
 	ReindexChainstate bool
 	Settings          string
@@ -44,11 +44,11 @@ type Config struct {
 var (
 	datadir           = "~/.bitcoin"
 	network           = "main"
-	server            = false
+	server            = true 
 	rpcauth           string
-	rpcuser           string
-	rpcpassword       string
 	rpcport           string
+	rpcallowip        string
+	rpcbind           string
 	maxconnections    string
 	includeConf       string
 	loadBlock         string
@@ -153,18 +153,50 @@ func NewModel() Model {
 				Title("Transaction Index").
 				Description("Maintain a full transaction index,\nused by the getrawtransaction rpc\n call (default: No)").
 				Value(&txindex),
+      
 			huh.NewInput().
 				Key("prune").
 				Title("Prune").
 				Description("Prune the blockchain database.\n Possible values: \n 0 = disable pruning blocks (default),\n 1 = allow manual pruning via RPC,\n >=550 = automatically prune block files\n to stay under the specified target size in MiB").
 				Validate(func(v string) error {
-					if boolToInt(txindex) == 1 && v != "0" {
+					if txindex == true && v != "0" {
 						return fmt.Errorf("pruning is incompatible with txindex. If you want to use pruning, you must disable txindex.")
 					}
 					return nil
 				}).
 				Value(&prune),
-		),
+		).Title("Basics"),
+    huh.NewGroup(
+      huh.NewConfirm().
+        Key("server").
+        Title("Enable Server").
+        Description("Accept command line and JSON-RPC commands").
+        Value(&server),
+
+      huh.NewInput().
+        Key("rpcauth").
+        Title("RPC Auth").
+        Description("Auth for JSON-RPC connections.\n Username and HMAC-SHA-256 hashed password for JSON-RPC connections.\n See the canonical python script included in share/rpcauth to generate this value.").
+        Value(&rpcauth),
+
+      huh.NewInput().
+        Key("rpcport").
+        Title("RPC Port").
+        Description("Port for RPC connections (default: 8332)").
+        Value(&rpcport),
+      
+      huh.NewInput().
+        Key("rpcallowip").
+        Title("RPC Allow IP").
+        Description("Allow JSON-RPC connections from specified source.").
+        Value(&rpcallowip),
+      
+      huh.NewInput().
+        Key("rpcbind").
+        Title("RPC bind").
+        Description("Bind to given address to listen for JSON-RPC connections.").
+        Value(&rpcbind),
+    ).Title("RPCs"),
 	).WithWidth(55).
 		WithShowHelp(false).
 		WithShowErrors(false)
@@ -273,29 +305,52 @@ func (m Model) appErrorBoundaryView(text string) string {
 
 func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
     var (
-      datadir string
       chain   string
       txindex string
+      server string
+      rpcauth string
+      rpcport string
+      rpcallowip string
+      rpcbind string
     )
 
-    datadir = "Datadir: " + m.form.GetString("datadir") + "\n"
     if m.form.GetString("chain") != "" {
       chain = "Network: " + m.form.GetString("chain") + "\n"
     }
     if m.form.GetBool("txindex") != false {
-      txindex = "TxIndex: " + strconv.FormatBool(m.form.GetBool("txindex")) + "\n"
+      txindex = "TxIndex enabled: " + strconv.FormatBool(m.form.GetBool("txindex")) + "\n"
     }
-
+    if m.form.GetBool("server") != true {
+      server = "RPC server enabled: " + strconv.FormatBool(m.form.GetBool("server")) + "\n"
+    }
+    if m.form.GetString("rpcauth") != "" {
+      rpcauth = "RPC auth: " + m.form.GetString("rpcauth") + "\n"
+    }
+    if m.form.GetString("rpcport") != "" {
+      rpcport = "RPC port: " + m.form.GetString("rpcport") + "\n"
+    }
+    if m.form.GetString("rpcallowip") != "" {
+      rpcallowip = "RPC allow IP: " + m.form.GetString("rpcallowip") + "\n"
+    }
+    if m.form.GetString("rpcbind") != "" {
+      rpcbind = "RPC bind: " + m.form.GetString("rpcbind") + "\n"
+    }
     const statusWidth = 28
     statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight()
     return s.Status.
       Height(lipgloss.Height(form.View())).
       Width(statusWidth).
       MarginLeft(statusMarginLeft).
-      Render(s.StatusHeader.Render("Current Config") + "\n\n" +
-        datadir +
+      Render(s.StatusHeader.Render("Current Config") + 
+        "\n\n" +
+        "Datadir: " + m.form.GetString("datadir") + "\n" +
         chain +
-        txindex + "\n",
+        txindex +
+        server + 
+        rpcauth +
+        rpcport +
+        rpcallowip +
+        rpcbind + "\n",
       )
   }
   
@@ -331,12 +386,11 @@ func writeConfig() {
     cfg := Config{
       DataDir:           datadir,
       Network:           network,
-      RPCUser:           rpcuser,
-      RPCPassword:       rpcpassword,
+      RPCAuth:           rpcauth,
       RPCPort:           rpcport,
       Server:            server,
       MaxConnections:    maxconnections,
-      TxIndex:           txindex,
+      TxIndex:           boolToInt(txindex),
       Prune:             prune,
       IncludeConf:       includeConf,
       LoadBlock:         loadBlock,
@@ -346,7 +400,7 @@ func writeConfig() {
       Par:               par,
       PersistMempool:    persistMempool,
       PersistMempoolV1:  persistMempoolV1,
-      PID:               pid,
+      Pid:               pid,
       Reindex:           reindex,
       ReindexChainstate: reindexChainstate,
       Settings:          settings,
