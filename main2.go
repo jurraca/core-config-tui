@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+  "log"
 	"os"
 	"strconv"
 	"strings"
+  "text/template"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
@@ -220,7 +222,7 @@ func (m Model) View() string {
 	default:
     // Status (right side)
     var status string
-    status = m.StatusBar(*s, *m.form, status)
+    status = m.StatusBar(*s, m.form, status)
 		// Form (left side)
 		v := strings.TrimSuffix(m.form.View(), "\n\n")
 		form := m.lg.NewStyle().Margin(1, 0).Render(v)
@@ -269,7 +271,7 @@ func (m Model) appErrorBoundaryView(text string) string {
 	)
 }
 
-func (m Model) StatusBar(s Styles, form huh.Form, status string) string {
+func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
     var (
       datadir string
       chain   string
@@ -285,9 +287,9 @@ func (m Model) StatusBar(s Styles, form huh.Form, status string) string {
     }
 
     const statusWidth = 28
-    statusMarginLeft := m.width - statusWidth - lipgloss.Width(form) - s.Status.GetMarginRight()
+    statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight()
     return s.Status.
-      Height(lipgloss.Height(form)).
+      Height(lipgloss.Height(form.View())).
       Width(statusWidth).
       MarginLeft(statusMarginLeft).
       Render(s.StatusHeader.Render("Current Config") + "\n\n" +
@@ -313,12 +315,58 @@ func (m Model) CompletedMsg(s Styles) string {
   return s.Status.Margin(0, 1).Padding(1, 2).Width(58).Render(b.String()) + "\n\n"
 }
 
+func writeConfig() {
+    // Write to bitcoin.conf
+    f, err := os.Create("bitcoin.conf")
+    if err != nil {
+      log.Fatal(err)
+    }
+    defer f.Close()
+
+    tmpl, err := template.ParseFiles("config.tmpl")
+    if err != nil {
+      log.Fatal(err)
+    }
+
+    cfg := Config{
+      DataDir:           datadir,
+      Network:           network,
+      RPCUser:           rpcuser,
+      RPCPassword:       rpcpassword,
+      RPCPort:           rpcport,
+      Server:            server,
+      MaxConnections:    maxconnections,
+      TxIndex:           txindex,
+      Prune:             prune,
+      IncludeConf:       includeConf,
+      LoadBlock:         loadBlock,
+      MaxMempool:        maxMempool,
+      MaxOrphanTx:       maxOrphanTx,
+      MempoolExpiry:     mempoolExpiry,
+      Par:               par,
+      PersistMempool:    persistMempool,
+      PersistMempoolV1:  persistMempoolV1,
+      PID:               pid,
+      Reindex:           reindex,
+      ReindexChainstate: reindexChainstate,
+      Settings:          settings,
+      ShutdownNotify:    shutdownNotify,
+      StartupNotify:     startupNotify,
+    }
+
+    err = tmpl.Execute(f, cfg)
+    if err != nil {
+      log.Fatal(err)
+    }
+}
+
 func main() {
 	_, err := tea.NewProgram(NewModel()).Run()
 	if err != nil {
 		fmt.Println("Oh no:", err)
 		os.Exit(1)
 	}
+  writeConfig()
 }
 
 func boolToInt(b bool) int {
