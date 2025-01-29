@@ -1,6 +1,6 @@
 
 {
-  description = "Bitcoin Core Configuration Generator";
+  description = "Bitcoin Core configuration generator";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -18,7 +18,7 @@
           version = "0.1.0";
           src = ./.;
           
-          vendorHash = null;
+          vendorHash = "sha256-bTV7RQ1An26kDSTGQf1lm5Jai2yGuV6NfZMMiO/isZs=";
         };
 
         devShells.default = pkgs.mkShell {
