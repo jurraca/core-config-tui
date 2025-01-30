@@ -136,6 +136,7 @@ func NewModel() Model {
 
 	m.form = huh.NewForm(
 		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("Basics")),
 			huh.NewInput().
 				Key("datadir").
 				Title("Data Directory").
@@ -172,7 +173,7 @@ func NewModel() Model {
 					return nil
 				}).
 				Value(&prune),
-		).Title("Basics"),
+		),
 		huh.NewGroup(
 			huh.NewConfirm().
 				Key("server").
@@ -180,11 +181,11 @@ func NewModel() Model {
 				Description("Accept command line and JSON-RPC commands. (default: true)").
 				Value(&server)),
 		huh.NewGroup(
-			huh.NewNote().Title(m.styles.Note.Render("RPC Configuration: the following fields are optional!\nIn particular, if you're running Bitcoin Core locally,\nRPC should work as is.")),
+			huh.NewNote().Title(m.styles.Note.Render("RPC Configuration: the following fields are optional.\nIf you're running Bitcoin Core locally,\nRPC should work as is.")),
 			huh.NewInput().
 				Key("rpcauth").
 				Title("RPC Auth").
-				Description("Username and HMAC-SHA-256 hashed password\nfor JSON-RPC connections.\nSee the canonical python script included in\nshare/rpcauth to generate this value.\n Default to cookie authentication.").
+				Description("Username and HMAC-SHA-256 hashed password\nfor JSON-RPC connections.\nSee the canonical python script included in\nshare/rpcauth to generate this value.\nDefaults to cookie authentication.").
 				Value(&rpcauth),
 			huh.NewInput().
 				Key("rpcport").
@@ -314,8 +315,8 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	var (
 		chain   string
 		txindex string
-		server string
 		prune string
+		server string
 		rpcauth    string
 		rpcport    string
 		rpcallowip string
@@ -328,11 +329,11 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	if m.form.GetBool("txindex") != false {
 		txindex = "txindex: " + strconv.FormatBool(m.form.GetBool("txindex")) + "\n"
 	}
-	if m.form.GetBool("server") != true {
+	if m.form.GetBool("server") == true {
 		server = "server: " + strconv.FormatBool(m.form.GetBool("server")) + "\n"
 	}
 	if m.form.GetString("prune") != "" {
-		server = "prune: " + m.form.GetString("prune") + " MiB" + "\n"
+		 prune = "prune: " + m.form.GetString("prune") + " MiB" + "\n"
 	}
 	if m.form.GetString("rpcauth") != "" {
 		rpcauth = "rpcauth: " + m.form.GetString("rpcauth") + "\n"
@@ -357,8 +358,8 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 			"datadir: " + m.form.GetString("datadir") + "\n" +
 			chain +
 			txindex +
-			server +
 			prune +
+			server +
 			rpcauth +
 			rpcport +
 			rpcallowip +
