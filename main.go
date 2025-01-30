@@ -45,7 +45,7 @@ type Config struct {
 var (
 	datadir           = "~/.bitcoin"
 	network           = "main"
-	server            = false 
+	server            = true
 	rpcauth           string
 	rpcport           string
 	rpcallowip        string
@@ -71,6 +71,7 @@ var (
 	red    = lipgloss.AdaptiveColor{Light: "#FE5F86", Dark: "#FE5F86"}
 	indigo = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
 	green  = lipgloss.AdaptiveColor{Light: "#02BA84", Dark: "#02BF87"}
+	orange = lipgloss.AdaptiveColor{Light: "#FFA500", Dark: "#FF8C00"}
 )
 
 type Styles struct {
@@ -78,6 +79,7 @@ type Styles struct {
 	HeaderText,
 	Status,
 	StatusHeader,
+	Note,
 	Highlight,
 	ErrorHeaderText,
 	Help lipgloss.Style
@@ -98,6 +100,9 @@ func NewStyles(lg *lipgloss.Renderer) *Styles {
 		MarginTop(1)
 	s.StatusHeader = lg.NewStyle().
 		Foreground(green).
+		Bold(true)
+	s.Note = lg.NewStyle().
+		Foreground(orange).
 		Bold(true)
 	s.Highlight = lg.NewStyle().
 		Foreground(lipgloss.Color("208"))
