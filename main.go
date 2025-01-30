@@ -314,6 +314,8 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	var (
 		chain   string
 		txindex string
+		server string
+		prune string
 		rpcauth    string
 		rpcport    string
 		rpcallowip string
@@ -325,6 +327,12 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	}
 	if m.form.GetBool("txindex") != false {
 		txindex = "txindex: " + strconv.FormatBool(m.form.GetBool("txindex")) + "\n"
+	}
+	if m.form.GetBool("server") != true {
+		server = "server: " + strconv.FormatBool(m.form.GetBool("server")) + "\n"
+	}
+	if m.form.GetString("prune") != "" {
+		server = "prune: " + m.form.GetString("prune") + " MiB" + "\n"
 	}
 	if m.form.GetString("rpcauth") != "" {
 		rpcauth = "rpcauth: " + m.form.GetString("rpcauth") + "\n"
@@ -349,7 +357,8 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 			"datadir: " + m.form.GetString("datadir") + "\n" +
 			chain +
 			txindex +
-			"RPC server enabled: " + strconv.FormatBool(m.form.GetBool("server")) +
+			server +
+			prune +
 			rpcauth +
 			rpcport +
 			rpcallowip +
