@@ -103,7 +103,8 @@ func NewStyles(lg *lipgloss.Renderer) *Styles {
 		Bold(true)
 	s.Note = lg.NewStyle().
 		Foreground(orange).
-		Bold(true)
+		Bold(true).
+		MarginLeft(1)
 	s.Highlight = lg.NewStyle().
 		Foreground(lipgloss.Color("208"))
 	s.ErrorHeaderText = s.HeaderText.
@@ -201,7 +202,7 @@ func NewModel() Model {
 				Description("Bind to given address to listen for JSON-RPC connections.").
 				Value(&rpcbind),
 		).WithHideFunc(func() bool { return !server }).Title("RPCs"),
-	).WithWidth(65).
+	).WithWidth(55).
 		WithShowHelp(false).
 		WithShowErrors(false)
 	return m
@@ -253,7 +254,9 @@ func (m Model) View() string {
 
 	switch m.form.State {
 	case huh.StateCompleted:
-		return m.CompletedMsg(*s)
+		header := m.appBoundaryView("Configuration Completed")
+		body := m.CompletedMsg(*s)
+		return s.Base.Render(header + "\n" + body + "\n")
 
 	default:
 		// Status (right side)
@@ -309,8 +312,8 @@ func (m Model) appErrorBoundaryView(text string) string {
 
 func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	var (
-		chain      string
-		txindex    string
+		chain   string
+		txindex string
 		server     string
 		rpcauth    string
 		rpcport    string
@@ -323,9 +326,6 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	}
 	if m.form.GetBool("txindex") != false {
 		txindex = "txindex: " + strconv.FormatBool(m.form.GetBool("txindex")) + "\n"
-	}
-	if m.form.GetBool("server") != true {
-		server = "RPC server enabled: " + strconv.FormatBool(m.form.GetBool("server")) + "\n"
 	}
 	if m.form.GetString("rpcauth") != "" {
 		rpcauth = "rpcauth: " + m.form.GetString("rpcauth") + "\n"
@@ -340,7 +340,7 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 		rpcbind = "rpcbind: " + m.form.GetString("rpcbind") + "\n"
 	}
 	const statusWidth = 32
-	statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight()
+	statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight() - 2
 	return s.Status.
 		Height(lipgloss.Height(form.View())).
 		Width(statusWidth).
@@ -350,7 +350,7 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 			"datadir: " + m.form.GetString("datadir") + "\n" +
 			chain +
 			txindex +
-			server +
+			"RPC server enabled: " + strconv.FormatBool(m.form.GetBool("server")) +
 			rpcauth +
 			rpcport +
 			rpcallowip +
@@ -371,7 +371,7 @@ func (m Model) CompletedMsg(s Styles) string {
 	fmt.Fprint(&b, "The configuration file will contain examples of ALL possible settings, and comments to help you make sense of them. Read them carefully before making changes.\n\n")
 	fmt.Fprintf(&b, "If you want to start over, you can always generate an example configuration with the %s script in the bitcoin repository.\n\n", s.Highlight.Render("contrib/devtools/gen-bitcoin-conf.sh"))
 	fmt.Fprint(&b, "Good luck, anon ;)")
-	return s.Status.Margin(0, 1).Padding(1, 2).Width(58).Render(b.String()) + "\n\n"
+	return s.Status.Margin(0, 2).Padding(1, 2).Width(58).Render(b.String()) + "\n\n"
 }
 
 func writeConfig() {
