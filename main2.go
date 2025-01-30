@@ -71,7 +71,8 @@ var (
 	red    = lipgloss.AdaptiveColor{Light: "#FE5F86", Dark: "#FE5F86"}
 	indigo = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
 	green  = lipgloss.AdaptiveColor{Light: "#02BA84", Dark: "#02BF87"}
-)
+	orange = lipgloss.AdaptiveColor{Light: "#FFA500", Dark: "#FF8C00"}
+)```
 
 type Styles struct {
 	Base,
@@ -173,6 +174,8 @@ func NewModel() Model {
         Title("Enable RPC Server").
         Description("Accept command line and JSON-RPC commands. (default: false)").
         Value(&server),
+			),
+		huh.NewGroup(
       huh.NewInput().
         Key("rpcauth").
         Title("RPC Auth").
@@ -197,7 +200,8 @@ func NewModel() Model {
         Description("Bind to given address to listen for JSON-RPC connections.").
         Value(&rpcbind).
         Hidden(func() bool { return !server }),
-    ).Title("RPCs"),
+    ).withHideFunc().
+		Title("RPCs"),
 	).WithWidth(55).
 		WithShowHelp(false).
 		WithShowErrors(false)
