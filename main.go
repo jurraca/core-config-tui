@@ -314,7 +314,6 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	var (
 		chain   string
 		txindex string
-		server     string
 		rpcauth    string
 		rpcport    string
 		rpcallowip string
