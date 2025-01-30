@@ -203,6 +203,15 @@ func NewModel() Model {
 				Description("Bind to given address to listen for JSON-RPC connections.").
 				Value(&rpcbind),
 		).WithHideFunc(func() bool { return !server }).Title("RPCs"),
+		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("Mempool Options: ")),
+		),
+		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("Wallet Options:\nBitcoin Core includes a wallet which is disabled\nby default. If you have an existing wallet,\nyou probably want to keep this disabled.")),
+		),
+		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("Danger Zone: leave these blank unless you know what you're doing.")),
+		),
 	).WithWidth(55).
 		WithShowHelp(false).
 		WithShowErrors(false)
@@ -313,10 +322,10 @@ func (m Model) appErrorBoundaryView(text string) string {
 
 func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	var (
-		chain   string
-		txindex string
-		prune string
-		server string
+		chain      string
+		txindex    string
+		prune      string
+		server     string
 		rpcauth    string
 		rpcport    string
 		rpcallowip string
@@ -333,7 +342,7 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 		server = "server: " + strconv.FormatBool(m.form.GetBool("server")) + "\n"
 	}
 	if m.form.GetString("prune") != "" {
-		 prune = "prune: " + m.form.GetString("prune") + " MiB" + "\n"
+		prune = "prune: " + m.form.GetString("prune") + " MiB" + "\n"
 	}
 	if m.form.GetString("rpcauth") != "" {
 		rpcauth = "rpcauth: " + m.form.GetString("rpcauth") + "\n"

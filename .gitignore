@@ -20,3 +20,4 @@ gopath/
 
 # Go workspace file
 go.work
+bitcoin.conf
