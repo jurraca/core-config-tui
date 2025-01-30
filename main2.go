@@ -177,22 +177,26 @@ func NewModel() Model {
         Key("rpcauth").
         Title("RPC Auth").
         Description("Auth for JSON-RPC connections.\n Username and HMAC-SHA-256 hashed password for JSON-RPC connections.\n See the canonical python script included in share/rpcauth to generate this value.").
-        Value(&rpcauth),
+        Value(&rpcauth).
+        Hidden(func() bool { return !server }),
       huh.NewInput().
         Key("rpcport").
         Title("RPC Port").
         Description("Port for RPC connections (default: 8332)").
-        Value(&rpcport),
+        Value(&rpcport).
+        Hidden(func() bool { return !server }),
       huh.NewInput().
         Key("rpcallowip").
         Title("RPC Allow IP").
         Description("Allow JSON-RPC connections from specified source.").
-        Value(&rpcallowip),
+        Value(&rpcallowip).
+        Hidden(func() bool { return !server }),
       huh.NewInput().
         Key("rpcbind").
         Title("RPC bind").
         Description("Bind to given address to listen for JSON-RPC connections.").
-        Value(&rpcbind),
+        Value(&rpcbind).
+        Hidden(func() bool { return !server }),
     ).Title("RPCs"),
 	).WithWidth(55).
 		WithShowHelp(false).
