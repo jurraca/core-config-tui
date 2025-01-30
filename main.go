@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-  "log"
+	"log"
 	"os"
 	"strconv"
 	"strings"
-  "text/template"
+	"text/template"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
@@ -22,7 +22,7 @@ type Config struct {
 	RPCBind           string
 	RPCPort           string
 	RPCAllowIP        string
-	Server            int 
+	Server            int
 	MaxConnections    string
 	TxIndex           int
 	Prune             string
@@ -154,7 +154,7 @@ func NewModel() Model {
 				Title("Transaction Index").
 				Description("Maintain a full transaction index,\nused by the getrawtransaction rpc\n call (default: No)").
 				Value(&txindex),
-      
+
 			huh.NewInput().
 				Key("prune").
 				Title("Prune").
@@ -167,34 +167,36 @@ func NewModel() Model {
 				}).
 				Value(&prune),
 		).Title("Basics"),
-    huh.NewGroup(
-      huh.NewConfirm().
-        Key("server").
-        Title("Enable RPC Server").
-        Description("Accept command line and JSON-RPC commands. (default: false)").
-        Value(&server),
-      huh.NewInput().
-        Key("rpcauth").
-        Title("RPC Auth").
-        Description("Auth for JSON-RPC connections.\n Username and HMAC-SHA-256 hashed password for JSON-RPC connections.\n See the canonical python script included in share/rpcauth to generate this value.").
-        Value(&rpcauth),
-      huh.NewInput().
-        Key("rpcport").
-        Title("RPC Port").
-        Description("Port for RPC connections (default: 8332)").
-        Value(&rpcport),
-      huh.NewInput().
-        Key("rpcallowip").
-        Title("RPC Allow IP").
-        Description("Allow JSON-RPC connections from specified source.").
-        Value(&rpcallowip),
-      huh.NewInput().
-        Key("rpcbind").
-        Title("RPC bind").
-        Description("Bind to given address to listen for JSON-RPC connections.").
-        Value(&rpcbind),
-    ).Title("RPCs"),
-	).WithWidth(55).
+		huh.NewGroup(
+			huh.NewConfirm().
+				Key("server").
+				Title("Enable RPC Server").
+				Description("Accept command line and JSON-RPC commands. (default: true)").
+				Value(&server)),
+		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("RPC Configuration: the following fields are optional!\nIn particular, if you're running Bitcoin Core locally,\nRPC should work as is.")),
+			huh.NewInput().
+				Key("rpcauth").
+				Title("RPC Auth").
+				Description("Username and HMAC-SHA-256 hashed password\nfor JSON-RPC connections.\nSee the canonical python script included in\nshare/rpcauth to generate this value.\n Default to cookie authentication.").
+				Value(&rpcauth),
+			huh.NewInput().
+				Key("rpcport").
+				Title("RPC Port").
+				Description("Port for RPC connections (default: 8332)").
+				Value(&rpcport),
+			huh.NewInput().
+				Key("rpcallowip").
+				Title("RPC Allow IP").
+				Description("Allow JSON-RPC connections from specified source.").
+				Value(&rpcallowip),
+			huh.NewInput().
+				Key("rpcbind").
+				Title("RPC bind").
+				Description("Bind to given address to listen for JSON-RPC connections.").
+				Value(&rpcbind),
+		).WithHideFunc(func() bool { return !server }).Title("RPCs"),
+	).WithWidth(65).
 		WithShowHelp(false).
 		WithShowErrors(false)
 	return m
@@ -246,12 +248,12 @@ func (m Model) View() string {
 
 	switch m.form.State {
 	case huh.StateCompleted:
-    return m.CompletedMsg(*s)
+		return m.CompletedMsg(*s)
 
 	default:
-    // Status (right side)
-    var status string
-    status = m.StatusBar(*s, m.form, status)
+		// Status (right side)
+		var status string
+		status = m.StatusBar(*s, m.form, status)
 		// Form (left side)
 		v := strings.TrimSuffix(m.form.View(), "\n\n")
 		form := m.lg.NewStyle().Margin(1, 0).Render(v)
@@ -301,115 +303,115 @@ func (m Model) appErrorBoundaryView(text string) string {
 }
 
 func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
-    var (
-      chain   string
-      txindex string
-      server string
-      rpcauth string
-      rpcport string
-      rpcallowip string
-      rpcbind string
-    )
+	var (
+		chain      string
+		txindex    string
+		server     string
+		rpcauth    string
+		rpcport    string
+		rpcallowip string
+		rpcbind    string
+	)
 
-    if m.form.GetString("chain") != "" {
-      chain = "Network: " + m.form.GetString("chain") + "\n"
-    }
-    if m.form.GetBool("txindex") != false {
-      txindex = "TxIndex enabled: " + strconv.FormatBool(m.form.GetBool("txindex")) + "\n"
-    }
-    if m.form.GetBool("server") != false {
-      server = "RPC server enabled: " + strconv.FormatBool(m.form.GetBool("server")) + "\n"
-    }
-    if m.form.GetString("rpcauth") != "" {
-      rpcauth = "RPC auth: " + m.form.GetString("rpcauth") + "\n"
-    }
-    if m.form.GetString("rpcport") != "" {
-      rpcport = "RPC port: " + m.form.GetString("rpcport") + "\n"
-    }
-    if m.form.GetString("rpcallowip") != "" {
-      rpcallowip = "RPC allow IP: " + m.form.GetString("rpcallowip") + "\n"
-    }
-    if m.form.GetString("rpcbind") != "" {
-      rpcbind = "RPC bind: " + m.form.GetString("rpcbind") + "\n"
-    }
-    const statusWidth = 28
-    statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight()
-    return s.Status.
-      Height(lipgloss.Height(form.View())).
-      Width(statusWidth).
-      MarginLeft(statusMarginLeft).
-      Render(s.StatusHeader.Render("Current Config") + 
-        "\n\n" +
-        "Datadir: " + m.form.GetString("datadir") + "\n" +
-        chain +
-        txindex +
-        server + 
-        rpcauth +
-        rpcport +
-        rpcallowip +
-        rpcbind + "\n",
-      )
-  }
-  
+	if m.form.GetString("chain") != "" {
+		chain = "chain: " + m.form.GetString("chain") + "\n"
+	}
+	if m.form.GetBool("txindex") != false {
+		txindex = "txindex: " + strconv.FormatBool(m.form.GetBool("txindex")) + "\n"
+	}
+	if m.form.GetBool("server") != true {
+		server = "RPC server enabled: " + strconv.FormatBool(m.form.GetBool("server")) + "\n"
+	}
+	if m.form.GetString("rpcauth") != "" {
+		rpcauth = "rpcauth: " + m.form.GetString("rpcauth") + "\n"
+	}
+	if m.form.GetString("rpcport") != "" {
+		rpcport = "rpcport: " + m.form.GetString("rpcport") + "\n"
+	}
+	if m.form.GetString("rpcallowip") != "" {
+		rpcallowip = "allowip: " + m.form.GetString("rpcallowip") + "\n"
+	}
+	if m.form.GetString("rpcbind") != "" {
+		rpcbind = "rpcbind: " + m.form.GetString("rpcbind") + "\n"
+	}
+	const statusWidth = 32
+	statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight()
+	return s.Status.
+		Height(lipgloss.Height(form.View())).
+		Width(statusWidth).
+		MarginLeft(statusMarginLeft).
+		Render(s.StatusHeader.Render("Current Config") +
+			"\n\n" +
+			"datadir: " + m.form.GetString("datadir") + "\n" +
+			chain +
+			txindex +
+			server +
+			rpcauth +
+			rpcport +
+			rpcallowip +
+			rpcbind + "\n",
+		)
+}
+
 func (m Model) CompletedMsg(s Styles) string {
-  var (
-    b          strings.Builder
-    chainVal   string
-    datadirVal string
-  )
-  chainVal = s.Highlight.Render(m.form.GetString("chain"))
-  datadirVal = s.Highlight.Render(m.form.GetString("datadir"))
-  fmt.Fprintf(&b, "You've successfully generated a %s configuration file for Bitcoin core on the %s network.\n\n", s.Highlight.Render("bitcoin.conf"), chainVal)
-  fmt.Fprintf(&b, "You should copy this file to the data directory: %s\n\n", datadirVal)
-  fmt.Fprint(&b, "The configuration file will contain examples of ALL possible settings, and comments to help you make sense of them. Read them carefully before making changes.\n\n")
-  fmt.Fprintf(&b, "If you want to start over, you can always generate an example configuration with the %s script in the bitcoin repository.\n\n", s.Highlight.Render("contrib/devtools/gen-bitcoin-conf.sh"))
-  fmt.Fprint(&b, "Good luck, anon ;)")
-  return s.Status.Margin(0, 1).Padding(1, 2).Width(58).Render(b.String()) + "\n\n"
+	var (
+		b          strings.Builder
+		chainVal   string
+		datadirVal string
+	)
+	chainVal = s.Highlight.Render(m.form.GetString("chain"))
+	datadirVal = s.Highlight.Render(m.form.GetString("datadir"))
+	fmt.Fprintf(&b, "You've successfully generated a %s configuration file for Bitcoin core on the %s network.\n\n", s.Highlight.Render("bitcoin.conf"), chainVal)
+	fmt.Fprintf(&b, "You should copy this file to the data directory: %s\n\n", datadirVal)
+	fmt.Fprint(&b, "The configuration file will contain examples of ALL possible settings, and comments to help you make sense of them. Read them carefully before making changes.\n\n")
+	fmt.Fprintf(&b, "If you want to start over, you can always generate an example configuration with the %s script in the bitcoin repository.\n\n", s.Highlight.Render("contrib/devtools/gen-bitcoin-conf.sh"))
+	fmt.Fprint(&b, "Good luck, anon ;)")
+	return s.Status.Margin(0, 1).Padding(1, 2).Width(58).Render(b.String()) + "\n\n"
 }
 
 func writeConfig() {
-    // Write to bitcoin.conf
-    f, err := os.Create("bitcoin.conf")
-    if err != nil {
-      log.Fatal(err)
-    }
-    defer f.Close()
+	// Write to bitcoin.conf
+	f, err := os.Create("bitcoin.conf")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
 
-    tmpl, err := template.ParseFiles("config.tmpl")
-    if err != nil {
-      log.Fatal(err)
-    }
+	tmpl, err := template.ParseFiles("config.tmpl")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    cfg := Config{
-      DataDir:           datadir,
-      Network:           network,
-      RPCAuth:           rpcauth,
-      RPCPort:           rpcport,
-      RPCBind:           rpcbind,
-      Server:            boolToInt(server),
-      MaxConnections:    maxconnections,
-      TxIndex:           boolToInt(txindex),
-      Prune:             prune,
-      IncludeConf:       includeConf,
-      LoadBlock:         loadBlock,
-      MaxMempool:        maxMempool,
-      MaxOrphanTx:       maxOrphanTx,
-      MempoolExpiry:     mempoolExpiry,
-      Par:               par,
-      PersistMempool:    boolToInt(persistMempool),
-      PersistMempoolV1:  boolToInt(persistMempoolV1),
-      Pid:               pid,
-      Reindex:           boolToInt(reindex),
-      ReindexChainstate: boolToInt(reindexChainstate),
-      Settings:          settings,
-      ShutdownNotify:    shutdownNotify,
-      StartupNotify:     startupNotify,
-    }
+	cfg := Config{
+		DataDir:           datadir,
+		Network:           network,
+		RPCAuth:           rpcauth,
+		RPCPort:           rpcport,
+		RPCBind:           rpcbind,
+		Server:            boolToInt(server),
+		MaxConnections:    maxconnections,
+		TxIndex:           boolToInt(txindex),
+		Prune:             prune,
+		IncludeConf:       includeConf,
+		LoadBlock:         loadBlock,
+		MaxMempool:        maxMempool,
+		MaxOrphanTx:       maxOrphanTx,
+		MempoolExpiry:     mempoolExpiry,
+		Par:               par,
+		PersistMempool:    boolToInt(persistMempool),
+		PersistMempoolV1:  boolToInt(persistMempoolV1),
+		Pid:               pid,
+		Reindex:           boolToInt(reindex),
+		ReindexChainstate: boolToInt(reindexChainstate),
+		Settings:          settings,
+		ShutdownNotify:    shutdownNotify,
+		StartupNotify:     startupNotify,
+	}
 
-    err = tmpl.Execute(f, cfg)
-    if err != nil {
-      log.Fatal(err)
-    }
+	err = tmpl.Execute(f, cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
@@ -418,7 +420,7 @@ func main() {
 		fmt.Println("Oh no:", err)
 		os.Exit(1)
 	}
-  writeConfig()
+	writeConfig()
 }
 
 func boolToInt(b bool) int {
