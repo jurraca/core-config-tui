@@ -53,11 +53,11 @@ var (
 	maxconnections    string
 	includeConf       string
 	loadBlock         string
-	maxMempool        string
+	maxMempool        = "300"
 	maxOrphanTx       string
-	mempoolExpiry     string
+	mempoolExpiry     = "336"
 	par               string
-	persistMempool    bool
+	persistMempool    = true
 	persistMempoolV1  bool
 	pid               string
 	prune             string
@@ -205,6 +205,20 @@ func NewModel() Model {
 		).WithHideFunc(func() bool { return !server }).Title("RPCs"),
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("Mempool Options: ")),
+			huh.NewInput().
+				Title("Max Mempool").
+				Description("Keep the transaction memory pool below <n> megabytes (default: 300)").
+				Value(&maxMempool),
+
+			huh.NewInput().
+				Title("Mempool Expiry").
+				Description("Do not keep transactions in the mempool longer than <n> hours (default: 336)").
+				Value(&mempoolExpiry),
+
+			huh.NewConfirm().
+				Title("Persist Mempool").
+				Description("Whether to save the mempool on shutdown and load on restart (default: true)").
+				Value(&persistMempool),
 		),
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("Wallet Options:\nBitcoin Core includes a wallet which is disabled\nby default. If you have an existing wallet,\nyou probably want to keep this disabled.")),
@@ -322,14 +336,17 @@ func (m Model) appErrorBoundaryView(text string) string {
 
 func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	var (
-		chain      string
-		txindex    string
-		prune      string
-		server     string
-		rpcauth    string
-		rpcport    string
-		rpcallowip string
-		rpcbind    string
+		chain          string
+		txindex       string
+		prune         string
+		server        string
+		rpcauth       string
+		rpcport       string
+		rpcallowip    string
+		rpcbind       string
+		maxMempool    string
+		mempoolExpiry string
+		persistMempool string
 	)
 
 	if m.form.GetString("chain") != "" {
@@ -355,6 +372,15 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	}
 	if m.form.GetString("rpcbind") != "" {
 		rpcbind = "rpcbind: " + m.form.GetString("rpcbind") + "\n"
+	}
+	if m.form.GetString("maxMempool") != "" {
+		maxMempool = "maxmempool: " + m.form.GetString("maxMempool") + "\n"
+	}
+	if m.form.GetString("mempoolExpiry") != "" {
+		mempoolExpiry = "mempoolexpiry: " + m.form.GetString("mempoolExpiry") + "\n"
+	}
+	if m.form.GetBool("persistMempool") {
+		persistMempool = "persistmempool: 1\n"
 	}
 	const statusWidth = 32
 	statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight() - 2
