@@ -65,8 +65,8 @@ var (
 	persistMempoolV1  bool
 	pid               string
 	prune             string
-	reindex           bool
-	reindexChainstate bool
+	reindex           = false
+	reindexChainstate = false
 	settings          string
 	shutdownNotify    string
 	startupNotify     string
@@ -74,7 +74,7 @@ var (
 	disablewallet     = true
 	wallet            string
 	walletdir         string
-	walletrbf         bool
+	walletrbf         = true
 
 	red    = lipgloss.AdaptiveColor{Light: "#FE5F86", Dark: "#FE5F86"}
 	indigo = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
@@ -135,6 +135,7 @@ type Model struct {
 	styles *Styles
 	form   *huh.Form
 	width  int
+	height int
 }
 
 func NewModel() Model {
@@ -167,7 +168,7 @@ func NewModel() Model {
 			huh.NewConfirm().
 				Key("txindex").
 				Title("Transaction Index").
-				Description("Maintain a full transaction index,\nused by the getrawtransaction rpc\n call (default: No)").
+				Description("Maintain a full transaction index, used by the\ngetrawtransaction rpc call (default: No)").
 				Value(&txindex),
 
 			huh.NewInput().
@@ -217,17 +218,17 @@ func NewModel() Model {
 			huh.NewInput().
 				Key("maxMempool").
 				Title("Max Mempool").
-				Description("Keep the transaction memory pool below <n> megabytes (default: 300)").
+				Description("Keep the transaction memory pool below <n> megabytes\n(default: 300)").
 				Value(&maxMempool),
 			huh.NewInput().
 				Key("mempoolExpiry").
 				Title("Mempool Expiry").
-				Description("Do not keep transactions in the mempool longer than <n> hours (default: 336)").
+				Description("Do not keep transactions in the mempool longer than\n<n> hours (default: 336)").
 				Value(&mempoolExpiry),
 			huh.NewConfirm().
 				Key("persistMempool").
 				Title("Persist Mempool").
-				Description("Whether to save the mempool on shutdown\nand load on restart (default: true)").
+				Description("Whether to save the mempool on shutdown\nand load on restart (default: Yes)").
 				Value(&persistMempool),
 		),
 		huh.NewGroup(
@@ -235,7 +236,7 @@ func NewModel() Model {
 			huh.NewConfirm().
 				Key("disablewallet").
 				Title("Disable Wallet").
-				Description("Disable the wallet and wallet RPC calls (default: Yes)").
+				Description("Disable the wallet and wallet RPC calls\n(default: Yes)").
 				Value(&disablewallet),
 		),
 		huh.NewGroup(
@@ -474,7 +475,7 @@ func (m Model) CompletedMsg(s Styles) string {
 	fmt.Fprint(&b, "The configuration file will contain examples of ALL possible settings, and comments to help you make sense of them. Read them carefully before making changes.\n\n")
 	fmt.Fprintf(&b, "If you want to start over, you can always generate an example configuration with the %s script in the bitcoin repository.\n\n", s.Highlight.Render("contrib/devtools/gen-bitcoin-conf.sh"))
 	fmt.Fprint(&b, "Good luck, anon ;)")
-	return s.Status.Margin(0, 2).Padding(1, 2).Width(58).Render(b.String()) + "\n\n"
+	return s.Status.Margin(1, 4).Padding(1, 2).Width(58).Render(b.String()) + "\n"
 }
 
 func writeConfig() {
