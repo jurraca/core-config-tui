@@ -299,7 +299,7 @@ version=1
 #consolidatefeerate=<amt>
 
 # Do not load the wallet and disable wallet RPC calls
-#disablewallet=1
+{{if .DisableWallet}}disablewallet={{.DisableWallet}}{{else}}#disablewallet=1{{end}}
 
 # The fee rate (in BTC/kvB) that indicates your tolerance for discarding
 # change by adding it to the fee (default: 0.0001). Note: An output
@@ -347,14 +347,14 @@ version=1
 # wallets and does not create new ones. For backwards compatibility
 # this also accepts names of existing top-level data files in
 # <walletdir>.
-#wallet=<path>
+{{if .Wallet}}wallet={{.Wallet}}{{else}}#wallet=<path>{{end}}
 
 # Make the wallet broadcast transactions (default: 1)
 #walletbroadcast=1
 
 # Specify directory to hold wallets (default: <datadir>/wallets if it
 # exists, otherwise <datadir>)
-#walletdir=<dir>
+{{if .WalletDir}}walletdir={{.WalletDir}}{{else}}#walletdir=<dir>{{end}}
 
 # Execute command when a wallet transaction changes. %s in cmd is replaced
 # by TxID, %w is replaced by wallet name, %b is replaced by the
@@ -367,7 +367,7 @@ version=1
 #walletnotify=<cmd>
 
 # Send transactions with full-RBF opt-in enabled (RPC only, default: 1)
-#walletrbf=1
+{{if .WalletRBF}}walletrbf={{.WalletRBF}}{{else}}#walletrbf=1{{end}}
 
 
 ### Debugging/Testing options
