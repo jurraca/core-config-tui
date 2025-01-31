@@ -40,6 +40,10 @@ type Config struct {
 	Settings          string
 	ShutdownNotify    string
 	StartupNotify     string
+	DisableWallet     int
+	Wallet            string
+	WalletDir         string
+	WalletRBF         int
 }
 
 var (
@@ -226,8 +230,31 @@ func NewModel() Model {
 				Value(&persistMempool),
 		),
 		huh.NewGroup(
-			huh.NewNote().Title(m.styles.Note.Render("Wallet Options:\nBitcoin Core includes a wallet which is disabled\nby default. If you have an existing wallet,\nyou probably want to keep this disabled.")),
+			huh.NewNote().Title(m.styles.Note.Render("Disable Wallet:\nBitcoin Core includes a wallet which is disabled\nby default. If you have an existing wallet,\nyou probably want to keep this disabled.")),
+			huh.NewConfirm().
+				Key("disablewallet").
+				Title("Disable Wallet").
+				Description("Disable the wallet and wallet RPC calls (default: true)").
+				Value(&disablewallet),
 		),
+		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("Wallet Options: ")),
+			huh.NewInput().
+				Key("wallet").
+				Title("Wallet Path").
+				Description("Specify wallet path to load at startup. Can be used multiple times to load multiple wallets.").
+				Value(&wallet),
+			huh.NewInput().
+				Key("walletdir").
+				Title("Wallet Directory").
+				Description("Directory to hold wallets (default: <datadir>/wallets if it exists, otherwise <datadir>)").
+				Value(&walletdir),
+			huh.NewConfirm().
+				Key("walletrbf").
+				Title("Wallet RBF").
+				Description("Send transactions with full-RBF opt-in enabled (default: true)").
+				Value(&walletrbf),
+		).WithHideFunc(func() bool { return disablewallet }),
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("Danger Zone: leave these blank unless you know what you're doing.")),
 		),
@@ -352,6 +379,10 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 		maxMempool    string
 		mempoolExpiry string
 		persistMempool string
+		disablewallet     string
+		wallet            string
+		walletdir         string
+		walletrbf         string
 	)
 
 	if m.form.GetString("chain") != "" {
@@ -387,6 +418,18 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	if m.form.GetBool("persistMempool") != true {
 		persistMempool = "persistmempool: " + strconv.FormatBool(m.form.GetBool("persistMempool")) + "\n"
 	}
+	if m.form.GetBool("disableWallet") != true {
+			disableWallet = "disableWallet: " + strconv.FormatBool(m.form.GetBool("disableWallet")) + "\n"
+	}
+	if m.form.GetString("Wallet") != true {
+			wallet = "wallet: " + strconv.FormatBool(m.form.GetBool("wallet")) + "\n"
+	}
+	if m.form.GetString("walletdir") != "" {
+			walletdir = "walletdir: " + m.form.GetString("walletdir") + "\n"
+	}
+	if m.form.GetBool("walletrbf") != "" {
+			walletrbf = "walletrbf: " + strconv.FormatBool(m.form.GetBool("walletrbf")) + "\n"
+	}
 	const statusWidth = 32
 	statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight() - 2
 	return s.Status.
@@ -403,10 +446,14 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 			rpcauth +
 			rpcport +
 			rpcallowip +
-			rpcbind + 
+			rpcbind +
 			maxMempool +
 			mempoolExpiry +
-			persistMempool + "\n",
+			persistMempool + 
+			disablewallet +
+			wallet +
+			walletdir +
+			walletrbf + "\n",
 		)
 }
 
