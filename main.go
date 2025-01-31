@@ -67,6 +67,10 @@ var (
 	shutdownNotify    string
 	startupNotify     string
 	txindex           = false
+	disablewallet     = true
+	wallet            string
+	walletdir         string
+	walletrbf         bool
 
 	red    = lipgloss.AdaptiveColor{Light: "#FE5F86", Dark: "#FE5F86"}
 	indigo = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
@@ -206,16 +210,17 @@ func NewModel() Model {
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("Mempool Options: ")),
 			huh.NewInput().
+			  Key("maxMempool").
 				Title("Max Mempool").
 				Description("Keep the transaction memory pool below <n> megabytes (default: 300)").
 				Value(&maxMempool),
-
 			huh.NewInput().
+			  Key("mempoolExpiry").
 				Title("Mempool Expiry").
 				Description("Do not keep transactions in the mempool longer than <n> hours (default: 336)").
 				Value(&mempoolExpiry),
-
 			huh.NewConfirm().
+			  Key("persistMempool").
 				Title("Persist Mempool").
 				Description("Whether to save the mempool on shutdown and load on restart (default: true)").
 				Value(&persistMempool),
@@ -379,8 +384,8 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	if m.form.GetString("mempoolExpiry") != "" {
 		mempoolExpiry = "mempoolexpiry: " + m.form.GetString("mempoolExpiry") + "\n"
 	}
-	if m.form.GetBool("persistMempool") {
-		persistMempool = "persistmempool: 1\n"
+	if m.form.GetBool("persistMempool") != true {
+		persistMempool = "persistmempool: " + strconv.FormatBool(m.form.GetBool("persistMempool")) + "\n"
 	}
 	const statusWidth = 32
 	statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight() - 2
@@ -398,7 +403,10 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 			rpcauth +
 			rpcport +
 			rpcallowip +
-			rpcbind + "\n",
+			rpcbind + 
+			maxMempool +
+			mempoolExpiry +
+			persistMempool + "\n",
 		)
 }
 
