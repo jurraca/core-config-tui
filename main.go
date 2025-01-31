@@ -47,8 +47,8 @@ type Config struct {
 }
 
 var (
-	datadir           = "~/.bitcoin"
-	network           = "main"
+	datadir           string
+	network           string
 	server            = true
 	rpcauth           string
 	rpcport           string
@@ -57,9 +57,9 @@ var (
 	maxconnections    string
 	includeConf       string
 	loadBlock         string
-	maxMempool        = "300"
+	maxMempool        string
 	maxOrphanTx       string
-	mempoolExpiry     = "336"
+	mempoolExpiry     string
 	par               string
 	persistMempool    = true
 	persistMempoolV1  bool
@@ -148,7 +148,7 @@ func NewModel() Model {
 			huh.NewInput().
 				Key("datadir").
 				Title("Data Directory").
-				Description("Directory to store blockchain data\n(defaults to ~/.bitcoin)").
+				Description("Directory to store blockchain data\n(defaults to ~/.bitcoin on Linux)").
 				Value(&datadir),
 
 			huh.NewSelect[string]().
@@ -183,13 +183,14 @@ func NewModel() Model {
 				Value(&prune),
 		),
 		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("RPC Configuration")),
 			huh.NewConfirm().
 				Key("server").
 				Title("Enable RPC Server").
-				Description("Accept command line and JSON-RPC commands. (default: true)").
+				Description("Accept command line and JSON-RPC commands. (default: Yes)").
 				Value(&server)),
 		huh.NewGroup(
-			huh.NewNote().Title(m.styles.Note.Render("RPC Configuration: the following fields are optional.\nIf you're running Bitcoin Core locally,\nRPC should work as is.")),
+			huh.NewNote().Title(m.styles.Note.Render("RPC Configuration\nThe following fields are optional.\nIf you're running Bitcoin Core locally,\nRPC should work as is.")),
 			huh.NewInput().
 				Key("rpcauth").
 				Title("RPC Auth").
@@ -212,7 +213,7 @@ func NewModel() Model {
 				Value(&rpcbind),
 		).WithHideFunc(func() bool { return !server }).Title("RPCs"),
 		huh.NewGroup(
-			huh.NewNote().Title(m.styles.Note.Render("Mempool Options: ")),
+			huh.NewNote().Title(m.styles.Note.Render("Mempool Options")),
 			huh.NewInput().
 				Key("maxMempool").
 				Title("Max Mempool").
@@ -226,7 +227,7 @@ func NewModel() Model {
 			huh.NewConfirm().
 				Key("persistMempool").
 				Title("Persist Mempool").
-				Description("Whether to save the mempool on shutdown and load on restart (default: true)").
+				Description("Whether to save the mempool on shutdown\nand load on restart (default: true)").
 				Value(&persistMempool),
 		),
 		huh.NewGroup(
@@ -234,7 +235,7 @@ func NewModel() Model {
 			huh.NewConfirm().
 				Key("disablewallet").
 				Title("Disable Wallet").
-				Description("Disable the wallet and wallet RPC calls (default: true)").
+				Description("Disable the wallet and wallet RPC calls (default: Yes)").
 				Value(&disablewallet),
 		),
 		huh.NewGroup(
@@ -242,7 +243,7 @@ func NewModel() Model {
 			huh.NewInput().
 				Key("wallet").
 				Title("Wallet Path").
-				Description("Specify wallet path to load at startup. Can be used multiple times to load multiple wallets.").
+				Description("Specify wallet path to load at startup.\nCan be used multiple times to load multiple wallets.").
 				Value(&wallet),
 			huh.NewInput().
 				Key("walletdir").
@@ -368,6 +369,7 @@ func (m Model) appErrorBoundaryView(text string) string {
 
 func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	var (
+		datadir        string
 		chain          string
 		txindex        string
 		prune          string
@@ -384,7 +386,9 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 		walletdir      string
 		walletrbf      string
 	)
-
+	if m.form.GetString("datadir") != "" {
+	  datadir = "datadir: " + m.form.GetString("datadir") + "\n"
+	}
 	if m.form.GetString("chain") != "" {
 		chain = "chain: " + m.form.GetString("chain") + "\n"
 	}
@@ -415,19 +419,19 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	if m.form.GetString("mempoolExpiry") != "" {
 		mempoolExpiry = "mempoolexpiry: " + m.form.GetString("mempoolExpiry") + "\n"
 	}
-	if m.form.GetBool("persistMempool") != true {
+	if m.form.GetBool("persistMempool") != false {
 		persistMempool = "persistmempool: " + strconv.FormatBool(m.form.GetBool("persistMempool")) + "\n"
 	}
-	if m.form.GetBool("disableWallet") != true {
-		disableWallet = "disableWallet: " + strconv.FormatBool(m.form.GetBool("disableWallet")) + "\n"
+	if m.form.GetBool("disablewallet") != false {
+		disableWallet = "disableWallet: " + strconv.FormatBool(m.form.GetBool("disablewallet")) + "\n"
 	}
 	if m.form.GetString("Wallet") != "" {
-		wallet = "wallet: " + strconv.FormatBool(m.form.GetBool("wallet")) + "\n"
+		wallet = "wallet: " + m.form.GetString("wallet") + "\n"
 	}
 	if m.form.GetString("walletdir") != "" {
 		walletdir = "walletdir: " + m.form.GetString("walletdir") + "\n"
 	}
-	if m.form.GetBool("walletrbf") != true {
+	if m.form.GetBool("walletrbf") != false {
 		walletrbf = "walletrbf: " + strconv.FormatBool(m.form.GetBool("walletrbf")) + "\n"
 	}
 	const statusWidth = 32
@@ -438,7 +442,7 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 		MarginLeft(statusMarginLeft).
 		Render(s.StatusHeader.Render("Current Config") +
 			"\n\n" +
-			"datadir: " + m.form.GetString("datadir") + "\n" +
+			datadir +
 			chain +
 			txindex +
 			prune +
