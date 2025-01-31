@@ -22,9 +22,9 @@ type Config struct {
 	RPCBind           string
 	RPCPort           string
 	RPCAllowIP        string
-	Server            int
+	Server            bool
 	MaxConnections    string
-	TxIndex           int
+	TxIndex           bool
 	Prune             string
 	IncludeConf       string
 	LoadBlock         string
@@ -32,49 +32,27 @@ type Config struct {
 	MaxOrphanTx       string
 	MempoolExpiry     string
 	Par               string
-	PersistMempool    int
-	PersistMempoolV1  int
+	PersistMempool    bool
+	PersistMempoolV1  bool
 	Pid               string
-	Reindex           int
-	ReindexChainstate int
+	Reindex           bool
+	ReindexChainstate bool
 	Settings          string
 	ShutdownNotify    string
 	StartupNotify     string
-	DisableWallet     int
+	DisableWallet     bool
 	Wallet            string
 	WalletDir         string
-	WalletRBF         int
+	WalletRBF         bool
 }
 
 var (
-	datadir           string
-	network           string
-	server            = true
-	rpcauth           string
-	rpcport           string
-	rpcallowip        string
-	rpcbind           string
-	maxconnections    string
-	includeConf       string
-	loadBlock         string
-	maxMempool        string
-	maxOrphanTx       string
-	mempoolExpiry     string
-	par               string
-	persistMempool    = true
-	persistMempoolV1  bool
-	pid               string
-	prune             string
-	reindex           = false
-	reindexChainstate = false
-	settings          string
-	shutdownNotify    string
-	startupNotify     string
-	txindex           = false
-	disablewallet     = true
-	wallet            string
-	walletdir         string
-	walletrbf         = true
+	cfg = Config{
+		Server:         true,
+		PersistMempool: true,
+		DisableWallet:  true,
+		WalletRBF:      true,
+	}
 
 	red    = lipgloss.AdaptiveColor{Light: "#FE5F86", Dark: "#FE5F86"}
 	indigo = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
@@ -150,7 +128,7 @@ func NewModel() Model {
 				Key("datadir").
 				Title("Data Directory").
 				Description("Directory to store blockchain data\n(defaults to ~/.bitcoin on Linux)").
-				Value(&datadir),
+				Value(&cfg.DataDir),
 
 			huh.NewSelect[string]().
 				Key("chain").
@@ -163,25 +141,25 @@ func NewModel() Model {
 					huh.NewOption("regtest", "regtest"),
 					huh.NewOption("signet", "signet"),
 				).
-				Value(&network),
+				Value(&cfg.Network),
 
 			huh.NewConfirm().
 				Key("txindex").
 				Title("Transaction Index").
 				Description("Maintain a full transaction index, used by the\ngetrawtransaction rpc call (default: No)").
-				Value(&txindex),
+				Value(&cfg.TxIndex),
 
 			huh.NewInput().
 				Key("prune").
 				Title("Prune").
 				Description("Prune the blockchain database.\n Possible values: \n 0 = disable pruning blocks (default),\n 1 = allow manual pruning via RPC,\n >=550 = automatically prune block files\n to stay under the specified target size in MiB").
 				Validate(func(v string) error {
-					if txindex == true && v != "0" {
+					if cfg.TxIndex == true && v != "0" {
 						return fmt.Errorf("pruning is incompatible with txindex. If you want to use pruning, you must disable txindex.")
 					}
 					return nil
 				}).
-				Value(&prune),
+				Value(&cfg.Prune),
 		),
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("RPC Configuration")),
@@ -189,47 +167,47 @@ func NewModel() Model {
 				Key("server").
 				Title("Enable RPC Server").
 				Description("Accept command line and JSON-RPC commands. (default: Yes)").
-				Value(&server)),
+				Value(&cfg.Server)),
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("RPC Configuration\nThe following fields are optional.\nIf you're running Bitcoin Core locally,\nRPC should work as is.")),
 			huh.NewInput().
 				Key("rpcauth").
 				Title("RPC Auth").
 				Description("Username and HMAC-SHA-256 hashed password\nfor JSON-RPC connections.\nSee the canonical python script included in\nshare/rpcauth to generate this value.\nDefaults to cookie authentication.").
-				Value(&rpcauth),
+				Value(&cfg.RPCAuth),
 			huh.NewInput().
 				Key("rpcport").
 				Title("RPC Port").
 				Description("Port for RPC connections (default: 8332)").
-				Value(&rpcport),
+				Value(&cfg.RPCPort),
 			huh.NewInput().
 				Key("rpcallowip").
 				Title("RPC Allow IP").
 				Description("Allow JSON-RPC connections from specified source.").
-				Value(&rpcallowip),
+				Value(&cfg.RPCAllowIP),
 			huh.NewInput().
 				Key("rpcbind").
-				Title("RPC bind").
+				Title("RPC Bind").
 				Description("Bind to given address to listen for JSON-RPC connections.").
-				Value(&rpcbind),
-		).WithHideFunc(func() bool { return !server }).Title("RPCs"),
+				Value(&cfg.RPCBind),
+		).WithHideFunc(func() bool { return !cfg.Server }).Title("RPCs"),
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("Mempool Options")),
 			huh.NewInput().
 				Key("maxMempool").
 				Title("Max Mempool").
 				Description("Keep the transaction memory pool below <n> megabytes\n(default: 300)").
-				Value(&maxMempool),
+				Value(&cfg.MaxMempool),
 			huh.NewInput().
 				Key("mempoolExpiry").
 				Title("Mempool Expiry").
 				Description("Do not keep transactions in the mempool longer than\n<n> hours (default: 336)").
-				Value(&mempoolExpiry),
+				Value(&cfg.MempoolExpiry),
 			huh.NewConfirm().
 				Key("persistMempool").
 				Title("Persist Mempool").
 				Description("Whether to save the mempool on shutdown\nand load on restart (default: Yes)").
-				Value(&persistMempool),
+				Value(&cfg.PersistMempool),
 		),
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("Disable Wallet:\nBitcoin Core includes a wallet which is disabled\nby default. If you have an existing wallet,\nyou probably want to keep this disabled.")),
@@ -237,7 +215,7 @@ func NewModel() Model {
 				Key("disablewallet").
 				Title("Disable Wallet").
 				Description("Disable the wallet and wallet RPC calls\n(default: Yes)").
-				Value(&disablewallet),
+				Value(&cfg.DisableWallet),
 		),
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("Wallet Options: ")),
@@ -245,30 +223,30 @@ func NewModel() Model {
 				Key("wallet").
 				Title("Wallet Path").
 				Description("Specify wallet path to load at startup.\nCan be used multiple times to load multiple wallets.").
-				Value(&wallet),
+				Value(&cfg.Wallet),
 			huh.NewInput().
 				Key("walletdir").
 				Title("Wallet Directory").
 				Description("Directory to hold wallets (default: <datadir>/wallets if it exists, otherwise <datadir>)").
-				Value(&walletdir),
+				Value(&cfg.WalletDir),
 			huh.NewConfirm().
 				Key("walletrbf").
 				Title("Wallet RBF").
 				Description("Send transactions with full-RBF opt-in enabled (default: true)").
-				Value(&walletrbf),
-		).WithHideFunc(func() bool { return disablewallet }),
+				Value(&cfg.WalletRBF),
+		).WithHideFunc(func() bool { return cfg.DisableWallet }),
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("Danger Zone - Reindex Blockchain:\nLeave these as \"No\" unless you know what you're doing.\nReindexing the blockchain can take a long time.")),
 			huh.NewConfirm().
-			Key("reindexChainstate").
-			Title("Reindex Chainstate").
-			Description("Wipe chain state and block index, and rebuild them\nfrom blk*.dat files on disk.").
-			Value(&reindex),
+				Key("reindexChainstate").
+				Title("Reindex Chainstate").
+				Description("Wipe chain state and block index, and rebuild them\nfrom blk*.dat files on disk.").
+				Value(&cfg.Reindex),
 			huh.NewConfirm().
-			Key("reindex").
-			Title("Reindex").
-			Description("Wipe chain state and block index, and rebuild them\nfrom blk*.dat files on disk. Also wipe and rebuild\nother optional indexes that are active.").
-			Value(&reindexChainstate),
+				Key("reindex").
+				Title("Reindex").
+				Description("Wipe chain state and block index, and rebuild them\nfrom blk*.dat files on disk. Also wipe and rebuild\nother optional indexes that are active.").
+				Value(&cfg.ReindexChainstate),
 		),
 	).WithWidth(55).
 		WithShowHelp(false).
@@ -380,27 +358,27 @@ func (m Model) appErrorBoundaryView(text string) string {
 
 func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	var (
-		datadir        string
-		chain          string
-		txindex        string
-		prune          string
-		server         string
-		reindex        string
+		datadir           string
+		chain             string
+		txindex           string
+		prune             string
+		server            string
+		reindex           string
 		reindexChainstate string
-		rpcauth        string
-		rpcport        string
-		rpcallowip     string
-		rpcbind        string
-		maxMempool     string
-		mempoolExpiry  string
-		persistMempool string
-		disableWallet  string
-		wallet         string
-		walletdir      string
-		walletrbf      string
+		rpcauth           string
+		rpcport           string
+		rpcallowip        string
+		rpcbind           string
+		maxMempool        string
+		mempoolExpiry     string
+		persistMempool    string
+		disableWallet     string
+		wallet            string
+		walletdir         string
+		walletrbf         string
 	)
 	if m.form.GetString("datadir") != "" {
-	  datadir = "datadir: " + m.form.GetString("datadir") + "\n"
+		datadir = "datadir: " + m.form.GetString("datadir") + "\n"
 	}
 	if m.form.GetString("chain") != "" {
 		chain = "chain: " + m.form.GetString("chain") + "\n"
@@ -511,37 +489,41 @@ func writeConfig() {
 		log.Fatal(err)
 	}
 
-	cfg := Config{
-		DataDir:           datadir,
-		Network:           network,
-		RPCAuth:           rpcauth,
-		RPCPort:           rpcport,
-		RPCBind:           rpcbind,
-		Server:            boolToInt(server),
-		MaxConnections:    maxconnections,
-		TxIndex:           boolToInt(txindex),
-		Prune:             prune,
-		IncludeConf:       includeConf,
-		LoadBlock:         loadBlock,
-		MaxMempool:        maxMempool,
-		MaxOrphanTx:       maxOrphanTx,
-		MempoolExpiry:     mempoolExpiry,
-		Par:               par,
-		PersistMempool:    boolToInt(persistMempool),
-		PersistMempoolV1:  boolToInt(persistMempoolV1),
-		Pid:               pid,
-		Reindex:           boolToInt(reindex),
-		ReindexChainstate: boolToInt(reindexChainstate),
-		Settings:          settings,
-		ShutdownNotify:    shutdownNotify,
-		StartupNotify:     startupNotify,
-		DisableWallet:     boolToInt(disablewallet),
-		Wallet:            wallet,
-		WalletDir:         walletdir,
-		WalletRBF:         boolToInt(walletrbf),
+	type ConfigTemplate struct {
+		Config
+		Server            int
+		TxIndex           int
+		PersistMempool    int
+		PersistMempoolV1  int
+		Reindex           int
+		ReindexChainstate int
+		DisableWallet     int
+		WalletRBF         int
 	}
 
-	err = tmpl.Execute(f, cfg)
+	templateData := ConfigTemplate{
+		Config:            cfg,
+		Server:            boolToInt(cfg.Server),
+		TxIndex:           boolToInt(cfg.TxIndex),
+		PersistMempool:    boolToInt(cfg.PersistMempool),
+		PersistMempoolV1:  boolToInt(cfg.PersistMempoolV1),
+		Reindex:           boolToInt(cfg.Reindex),
+		ReindexChainstate: boolToInt(cfg.ReindexChainstate),
+		DisableWallet:     boolToInt(cfg.DisableWallet),
+		WalletRBF:         boolToInt(cfg.WalletRBF),
+	}
+
+	// Convert boolean fields to int
+	templateData.Server = boolToInt(cfg.Server)
+	templateData.TxIndex = boolToInt(cfg.TxIndex)
+	templateData.PersistMempool = boolToInt(cfg.PersistMempool)
+	templateData.PersistMempoolV1 = boolToInt(cfg.PersistMempoolV1)
+	templateData.Reindex = boolToInt(cfg.Reindex)
+	templateData.ReindexChainstate = boolToInt(cfg.ReindexChainstate)
+	templateData.DisableWallet = boolToInt(cfg.DisableWallet)
+	templateData.WalletRBF = boolToInt(cfg.WalletRBF)
+
+	err = tmpl.Execute(f, templateData)
 	if err != nil {
 		log.Fatal(err)
 	}
