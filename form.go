@@ -1,75 +1,21 @@
-package main
+package form
 
 import (
-	"fmt"
-	"log"
-	"os"
-	"text/template"
-
 	"github.com/charmbracelet/huh"
 )
 
-type Config struct {
-	DataDir           string
-	Network           string
-	RPCUser           string
-	RPCPassword       string
-	RPCPort           string
-	Server            bool
-	MaxConnections    string
-	TxIndex           bool
-	Prune             string
-	IncludeConf       string
-	LoadBlock         string
-	MaxMempool        string
-	MaxOrphanTx       string
-	MempoolExpiry     string
-	Par               string
-	PersistMempool    bool
-	PersistMempoolV1  bool
-	PID               string
-	Reindex           bool
-	ReindexChainstate bool
-	Settings          string
-	ShutdownNotify    string
-	StartupNotify     string
-}
-
-var (
-	datadir           string
-	network           string
-	server            bool
-	rpcuser           string
-	rpcpassword       string
-	rpcport           string
-	maxconnections    string
-	includeConf       string
-	loadBlock         string
-	maxMempool        string
-	maxOrphanTx       string
-	mempoolExpiry     string
-	par               string
-	persistMempool    bool
-	persistMempoolV1  bool
-	pid               string
-	prune             string
-	reindex           bool
-	reindexChainstate bool
-	settings          string
-	shutdownNotify    string
-	startupNotify     string
-	txindex           bool
-)
-
-func main() {
-	form := huh.NewForm(
+func (m Model) getForm() *huh.Form {
+	m.form = huh.NewForm(
 		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("Basics")),
 			huh.NewInput().
-				Title("Bitcoin Data Directory").
-				Description("Directory to store blockchain data (defaults to ~/.bitcoin)").
+				Key("datadir").
+				Title("Data Directory").
+				Description("Directory to store blockchain data\n(defaults to ~/.bitcoin)").
 				Value(&datadir),
 
 			huh.NewSelect[string]().
+				Key("chain").
 				Title("Select Network").
 				Description("The network to run bitcoin on.").
 				Options(
@@ -82,181 +28,79 @@ func main() {
 				Value(&network),
 
 			huh.NewConfirm().
+				Key("txindex").
 				Title("Transaction Index").
-				Description("Maintain a full transaction index, used by the getrawtransaction rpc call (default: No)").
+				Description("Maintain a full transaction index,\nused by the getrawtransaction rpc\n call (default: No)").
 				Value(&txindex),
+
 			huh.NewInput().
+				Key("prune").
 				Title("Prune").
-				Description("Prune the blockchain database. Possible values: \n 0 = disable pruning blocks (default),\n 1 = allow manual pruning via RPC,\n >=550 = automatically prune block files to stay under the specified target size in MiB").
+				Description("Prune the blockchain database.\n Possible values: \n 0 = disable pruning blocks (default),\n 1 = allow manual pruning via RPC,\n >=550 = automatically prune block files\n to stay under the specified target size in MiB").
 				Validate(func(v string) error {
-					if boolToInt(txindex) == 1 && v != "0" {
+					if txindex == true && v != "0" {
 						return fmt.Errorf("pruning is incompatible with txindex. If you want to use pruning, you must disable txindex.")
 					}
 					return nil
 				}).
 				Value(&prune),
-		).Title("Basics"),
+		),
 		huh.NewGroup(
 			huh.NewConfirm().
-				Title("Enable Server").
-				Description("Accept command line and JSON-RPC commands").
-				Value(&server),
-
+				Key("server").
+				Title("Enable RPC Server").
+				Description("Accept command line and JSON-RPC commands. (default: true)").
+				Value(&server)),
+		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("RPC Configuration: the following fields are optional.\nIf you're running Bitcoin Core locally,\nRPC should work as is.")),
 			huh.NewInput().
-				Title("RPC Username").
-				Description("Username for JSON-RPC connections").
-				Value(&rpcuser),
-
+				Key("rpcauth").
+				Title("RPC Auth").
+				Description("Username and HMAC-SHA-256 hashed password\nfor JSON-RPC connections.\nSee the canonical python script included in\nshare/rpcauth to generate this value.\nDefaults to cookie authentication.").
+				Value(&rpcauth),
 			huh.NewInput().
-				Title("RPC Password").
-				Description("Password for JSON-RPC connections").
-				Value(&rpcpassword),
-
-			huh.NewInput().
+				Key("rpcport").
 				Title("RPC Port").
 				Description("Port for RPC connections (default: 8332)").
 				Value(&rpcport),
-		).Title("RPCs"),
+			huh.NewInput().
+				Key("rpcallowip").
+				Title("RPC Allow IP").
+				Description("Allow JSON-RPC connections from specified source.").
+				Value(&rpcallowip),
+			huh.NewInput().
+				Key("rpcbind").
+				Title("RPC bind").
+				Description("Bind to given address to listen for JSON-RPC connections.").
+				Value(&rpcbind),
+		).WithHideFunc(func() bool { return !server }).Title("RPCs"),
 		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("Mempool Options: ")),
 			huh.NewInput().
-				Title("Include Config").
-				Description("Specify additional configuration file, relative to the -datadir path").
-				Value(&includeConf),
-
-			huh.NewInput().
-				Title("loadblock").
-				Description("External filepath to import blocks from on startup").
-				Value(&loadBlock),
-
-			huh.NewInput().
+			  Key("maxMempool").
 				Title("Max Mempool").
 				Description("Keep the transaction memory pool below <n> megabytes (default: 300)").
 				Value(&maxMempool),
-
 			huh.NewInput().
-				Title("Max Orphan Transactions").
-				Description("Keep at most <n> unconnectable transactions in memory (default: 100)").
-				Value(&maxOrphanTx),
-
-			huh.NewInput().
+			  Key("mempoolExpiry").
 				Title("Mempool Expiry").
 				Description("Do not keep transactions in the mempool longer than <n> hours (default: 336)").
 				Value(&mempoolExpiry),
-
-			huh.NewInput().
-				Title("Script Verification Threads").
-				Description("Set the number of script verification threads (0 = auto, up to 15, <0 = leave that many cores free, default: 0)").
-				Value(&par),
-
 			huh.NewConfirm().
+			  Key("persistMempool").
 				Title("Persist Mempool").
-				Description("Whether to save the mempool on shutdown and load on restart (default: 1)").
+				Description("Whether to save the mempool on shutdown and load on restart (default: true)").
 				Value(&persistMempool),
-
-			huh.NewConfirm().
-				Title("Use Legacy Mempool Format").
-				Description("Whether a mempool.dat file created by -persistmempool or the savemempool RPC will be written in the legacy format (version 1) or current format (version 2). This temporary option will be removed in the future. (default: 0)").
-				Value(&persistMempoolV1),
-
-			huh.NewInput().
-				Title("PID File").
-				Description("Specify pid file (default: bitcoind.pid)").
-				Value(&pid),
-
-			huh.NewInput().
-				Title("Prune Blockchain").
-				Description("Reduce storage by pruning old blocks (>=550 MB to retain)").
-				Value(&prune),
-
-			huh.NewConfirm().
-				Title("Reindex").
-				Description("Rebuild chain state and block index from blk*.dat files").
-				Value(&reindex),
-
-			huh.NewConfirm().
-				Title("Reindex Chainstate").
-				Description("If enabled, wipe chain state, and rebuild it from blk*.dat files on disk. If an assumeutxo snapshot was loaded, its chainstate will be wiped as well. The snapshot can then be reloaded via RPC.").
-				Value(&reindexChainstate),
-
-			huh.NewInput().
-				Title("Settings File").
-				Description("Path to dynamic settings data file (default: settings.json)").
-				Value(&settings),
-
-			huh.NewInput().
-				Title("Shutdown Notify Command").
-				Description("Execute command immediately before beginning shutdown.").
-				Value(&shutdownNotify),
-
-			huh.NewInput().
-				Title("Startup Notify Command").
-				Description("Execute command on startup").
-				Value(&startupNotify),
-
-			huh.NewInput().
-				Title("Max Connections").
-				Description("Max peer connections (default: 125)").
-				Value(&maxconnections),
-
-			huh.NewInput().
-				Title("Prune Blockchain").
-				Description("Reduce storage (0 for no pruning, >=550 for MB to retain)").
-				Value(&prune),
-		).Title("General Options"),
-	)
-
-	err := form.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Write to bitcoin.conf
-	f, err := os.Create("bitcoin.conf")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	tmpl, err := template.ParseFiles("config.tmpl")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	cfg := Config{
-		DataDir:           datadir,
-		Network:           network,
-		RPCUser:           rpcuser,
-		RPCPassword:       rpcpassword,
-		RPCPort:           rpcport,
-		Server:            server,
-		MaxConnections:    maxconnections,
-		TxIndex:           txindex,
-		Prune:             prune,
-		IncludeConf:       includeConf,
-		LoadBlock:         loadBlock,
-		MaxMempool:        maxMempool,
-		MaxOrphanTx:       maxOrphanTx,
-		MempoolExpiry:     mempoolExpiry,
-		Par:               par,
-		PersistMempool:    persistMempool,
-		PersistMempoolV1:  persistMempoolV1,
-		PID:               pid,
-		Reindex:           reindex,
-		ReindexChainstate: reindexChainstate,
-		Settings:          settings,
-		ShutdownNotify:    shutdownNotify,
-		StartupNotify:     startupNotify,
-	}
-
-	err = tmpl.Execute(f, cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func boolToInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
+		),
+		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("Wallet Options:\nBitcoin Core includes a wallet which is disabled\nby default. If you have an existing wallet,\nyou probably want to keep this disabled.")),
+		),
+		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("Danger Zone: leave these blank unless you know what you're doing.")),
+		),
+	).WithWidth(55).
+		WithShowHelp(false).
+		WithShowErrors(false)
+	
+	return m.form
 }
