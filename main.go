@@ -258,7 +258,17 @@ func NewModel() Model {
 				Value(&walletrbf),
 		).WithHideFunc(func() bool { return disablewallet }),
 		huh.NewGroup(
-			huh.NewNote().Title(m.styles.Note.Render("Danger Zone: leave these blank unless you know what you're doing.")),
+			huh.NewNote().Title(m.styles.Note.Render("Danger Zone - Reindex Blockchain:\nLeave these as \"No\" unless you know what you're doing.\nReindexing the blockchain can take a long time.")),
+			huh.NewConfirm().
+			Key("reindexChainstate").
+			Title("Reindex Chainstate").
+			Description("Wipe chain state and block index, and rebuild them\nfrom blk*.dat files on disk.").
+			Value(&reindex),
+			huh.NewConfirm().
+			Key("reindex").
+			Title("Reindex").
+			Description("Wipe chain state and block index, and rebuild them\nfrom blk*.dat files on disk. Also wipe and rebuild\nother optional indexes that are active.").
+			Value(&reindexChainstate),
 		),
 	).WithWidth(55).
 		WithShowHelp(false).
@@ -375,6 +385,8 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 		txindex        string
 		prune          string
 		server         string
+		reindex        string
+		reindexChainstate string
 		rpcauth        string
 		rpcport        string
 		rpcallowip     string
@@ -435,10 +447,16 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	if m.form.GetBool("walletrbf") != false {
 		walletrbf = "walletrbf: " + strconv.FormatBool(m.form.GetBool("walletrbf")) + "\n"
 	}
+	if m.form.GetBool("reindex") != false {
+		reindex = "reindex: " + strconv.FormatBool(m.form.GetBool("reindex")) + "\n"
+	}
+	if m.form.GetBool("reindexChainstate") != false {
+		reindexChainstate = "reindexChainstate: " + strconv.FormatBool(m.form.GetBool("reindexChainstate")) + "\n"
+	}
 	const statusWidth = 32
 	statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight() - 2
 	return s.Status.
-		Height(lipgloss.Height(form.View())).
+		Height(max(lipgloss.Height(form.View()), 30)).
 		Width(statusWidth).
 		MarginLeft(statusMarginLeft).
 		Render(s.StatusHeader.Render("Current Config") +
@@ -458,7 +476,9 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 			disableWallet +
 			wallet +
 			walletdir +
-			walletrbf + "\n",
+			walletrbf +
+			reindex +
+			reindexChainstate + "\n",
 		)
 }
 
