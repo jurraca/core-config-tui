@@ -152,7 +152,7 @@ func NewModel() Model {
 			huh.NewInput().
 				Key("prune").
 				Title("Prune").
-				Description("Prune the blockchain database.\n Possible values: \n 0 = disable pruning blocks (default),\n 1 = allow manual pruning via RPC,\n >=550 = automatically prune block files\n to stay under the specified target size in MiB").
+				Description("Prune the blockchain database.\nPossible values: \n 0 = disable pruning blocks (default),\n 1 = allow manual pruning via RPC,\n >=550 = automatically prune block files\n to stay under the specified target size in MiB").
 				Validate(func(v string) error {
 					if cfg.TxIndex == true && v != "0" {
 						return fmt.Errorf("pruning is incompatible with txindex. If you want to use pruning, you must disable txindex.")
@@ -166,7 +166,7 @@ func NewModel() Model {
 			huh.NewConfirm().
 				Key("server").
 				Title("Enable RPC Server").
-				Description("Accept command line and JSON-RPC commands. (default: Yes)").
+				Description("Accept command line and JSON-RPC commands.\n(default: Yes)").
 				Value(&cfg.Server)),
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("RPC Configuration\nThe following fields are optional.\nIf you're running Bitcoin Core locally,\nRPC should work as is.")),
@@ -188,7 +188,7 @@ func NewModel() Model {
 			huh.NewInput().
 				Key("rpcbind").
 				Title("RPC Bind").
-				Description("Bind to given address to listen for JSON-RPC connections.").
+				Description("Bind to given address to listen for JSON-RPC\nconnections.").
 				Value(&cfg.RPCBind),
 		).WithHideFunc(func() bool { return !cfg.Server }).Title("RPCs"),
 		huh.NewGroup(
@@ -227,16 +227,16 @@ func NewModel() Model {
 			huh.NewInput().
 				Key("walletdir").
 				Title("Wallet Directory").
-				Description("Directory to hold wallets (default: <datadir>/wallets if it exists, otherwise <datadir>)").
+				Description("Directory to hold wallets (default: <datadir>/wallets\nif it exists, otherwise <datadir>)").
 				Value(&cfg.WalletDir),
 			huh.NewConfirm().
 				Key("walletrbf").
 				Title("Wallet RBF").
-				Description("Send transactions with full-RBF opt-in enabled (default: true)").
+				Description("Send transactions with full-RBF opt-in\nenabled (default: true)").
 				Value(&cfg.WalletRBF),
 		).WithHideFunc(func() bool { return cfg.DisableWallet }),
 		huh.NewGroup(
-			huh.NewNote().Title(m.styles.Note.Render("Danger Zone - Reindex Blockchain:\nLeave these as \"No\" unless you know what you're doing.\nReindexing the blockchain can take a long time.")),
+			huh.NewNote().Title(m.styles.Note.Render("Danger Zone - Reindex Blockchain:\nLeave these as \"No\" unless you know what you're\ndoing. Reindexing will erase your current index\nif it exists and download the chain from genesis.")),
 			huh.NewConfirm().
 				Key("reindexChainstate").
 				Title("Reindex Chainstate").
