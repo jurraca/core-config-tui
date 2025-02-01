@@ -54,10 +54,11 @@ var (
 		WalletRBF:      true,
 	}
 
-	red    = lipgloss.AdaptiveColor{Light: "#FE5F86", Dark: "#FE5F86"}
-	indigo = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
-	green  = lipgloss.AdaptiveColor{Light: "#02BA84", Dark: "#02BF87"}
-	orange = lipgloss.AdaptiveColor{Light: "#FFA500", Dark: "#FF8C00"}
+	red       = lipgloss.AdaptiveColor{Light: "#FE5F86", Dark: "#FE5F86"}
+	indigo    = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
+	green     = lipgloss.AdaptiveColor{Light: "#02BA84", Dark: "#02BF87"}
+	orange    = lipgloss.AdaptiveColor{Light: "#FFA500", Dark: "#FF8C00"}
+	highlight = lipgloss.AdaptiveColor{Light: "#FFA500", Dark: "#FF8C00"}
 )
 
 type Styles struct {
@@ -85,12 +86,15 @@ func NewStyles(lg *lipgloss.Renderer) *Styles {
 		PaddingLeft(1).
 		MarginTop(1)
 	s.StatusHeader = lg.NewStyle().
-		Foreground(green).
+		Foreground(orange).
 		Bold(true)
 	s.Note = lg.NewStyle().
-		Foreground(orange).
+		Background(highlight).
+		Foreground(lipgloss.Color("#FAFAFA")).
 		Bold(true).
-		MarginLeft(1)
+		MarginLeft(1).
+		MarginTop(1).
+		Padding(1, 2, 1, 2)
 	s.Highlight = lg.NewStyle().
 		Foreground(lipgloss.Color("208"))
 	s.ErrorHeaderText = s.HeaderText.
@@ -434,7 +438,7 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	const statusWidth = 32
 	statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight() - 2
 	return s.Status.
-		Height(max(lipgloss.Height(form.View()), 30)).
+		Height(max(lipgloss.Height(form.View()), 28)).
 		Width(statusWidth).
 		MarginLeft(statusMarginLeft).
 		Render(s.StatusHeader.Render("Current Config") +
