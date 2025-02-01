@@ -152,7 +152,9 @@ func NewModel() Model {
 				Title("Transaction Index").
 				Description("Maintain a full transaction index, used by the\ngetrawtransaction rpc call (default: No)").
 				Value(&cfg.TxIndex),
-
+		),
+		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Note.Render("Prune Blockchain\nSince you are not storing a txIndex,\nyou can limit the size of data you keep on disk.")),
 			huh.NewInput().
 				Key("prune").
 				Title("Prune").
@@ -164,7 +166,7 @@ func NewModel() Model {
 					return nil
 				}).
 				Value(&cfg.Prune),
-		),
+		).WithHideFunc(func() bool { return cfg.TxIndex }),
 		huh.NewGroup(
 			huh.NewNote().Title(m.styles.Note.Render("RPC Configuration")),
 			huh.NewConfirm().
