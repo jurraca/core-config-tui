@@ -59,6 +59,9 @@ var (
 	green     = lipgloss.AdaptiveColor{Light: "#02BA84", Dark: "#02BF87"}
 	orange    = lipgloss.AdaptiveColor{Light: "#FFA500", Dark: "#FF8C00"}
 	highlight = lipgloss.AdaptiveColor{Light: "#FFA500", Dark: "#FF8C00"}
+
+	maybeReindex = false
+	confirmReindex = false
 )
 
 type Styles struct {
@@ -69,6 +72,7 @@ type Styles struct {
 	Note,
 	Highlight,
 	ErrorHeaderText,
+	Warning,
 	Help lipgloss.Style
 }
 
@@ -99,6 +103,13 @@ func NewStyles(lg *lipgloss.Renderer) *Styles {
 		Foreground(lipgloss.Color("208"))
 	s.ErrorHeaderText = s.HeaderText.
 		Foreground(red)
+	s.Warning = lg.NewStyle().
+		Background(lipgloss.Color("196")).
+		Foreground(lipgloss.Color("#FAFAFA")).
+		Bold(true).
+		MarginLeft(1).
+		MarginTop(1).
+		Padding(1, 2, 1, 2)
 	s.Help = lg.NewStyle().
 		Foreground(lipgloss.Color("240"))
 	return &s
@@ -242,18 +253,42 @@ func NewModel() Model {
 				Value(&cfg.WalletRBF),
 		).WithHideFunc(func() bool { return cfg.DisableWallet }),
 		huh.NewGroup(
-			huh.NewNote().Title(m.styles.Note.Render("Danger Zone - Reindex Blockchain:\nLeave these as \"No\" unless you know what you're\ndoing. Reindexing will erase your current index\nif it exists and download the chain from genesis.")),
+			huh.NewNote().Title(m.styles.Note.Render("Reindex Blockchain Data")),
+			huh.NewConfirm().
+				Title("Do you want to download the blockchain from genesis?").
+				Value(&maybeReindex),
+		),
+		huh.NewGroup(
+			huh.NewNote().Title(m.styles.Warning.Render("Danger Zone - Reindex Blockchain:\n")),
+			huh.NewConfirm().
+			        Title("Are you sure?").
+				Description("Enabling the following settings will ERASE existing\nchain and/or index data. Downloading the chain\nfrom genesis and reindexing is a time-consuming\nprocess.").
+				Affirmative("I understand.").
+				Negative("Nope!").
+				Value(&confirmReindex),
 			huh.NewConfirm().
 				Key("reindexChainstate").
 				Title("Reindex Chainstate").
 				Description("Wipe chain state and block index, and rebuild them\nfrom blk*.dat files on disk.").
+				Validate(func(v bool) error {
+					if confirmReindex == false && v == true {
+						return fmt.Errorf("Please confirm above before enabling this setting.")
+					}
+					return nil
+				}).
 				Value(&cfg.Reindex),
 			huh.NewConfirm().
 				Key("reindex").
 				Title("Reindex").
 				Description("Wipe chain state and block index, and rebuild them\nfrom blk*.dat files on disk. Also wipe and rebuild\nother optional indexes that are active.").
+				Validate(func(v bool) error {
+					if confirmReindex == false && v == true {
+						return fmt.Errorf("Please confirm above before enabling this setting.")
+					}
+					return nil
+				}).
 				Value(&cfg.ReindexChainstate),
-		),
+		).WithHideFunc(func() bool { return !maybeReindex }),
 	).WithWidth(55).
 		WithShowHelp(false).
 		WithShowErrors(false)
