@@ -475,7 +475,7 @@ func (m Model) StatusBar(s Styles, form *huh.Form, status string) string {
 	const statusWidth = 32
 	statusMarginLeft := m.width - statusWidth - lipgloss.Width(form.View()) - s.Status.GetMarginRight() - 2
 	return s.Status.
-		Height(max(lipgloss.Height(form.View()), 28)).
+		Height(max(lipgloss.Height(form.View()), 24)).
 		Width(statusWidth).
 		MarginLeft(statusMarginLeft).
 		Render(s.StatusHeader.Render("Current Config") +
