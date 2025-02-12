@@ -1,7 +1,8 @@
-
 # Bitcoin Core Config Generator
 
 A terminal user interface (TUI) for generating Bitcoin Core configuration files, built with Go using [Charm's Huh](https://github.com/charmbracelet/huh) and [BubbleTea](https://github.com/charmbracelet/bubbletea) libraries.
+
+![](demo.webm)
 
 ## About
 
@@ -21,12 +22,13 @@ Run the program:
 ```bash
 go run main.go
 ```
+or build a binary with `go build`
 
 Navigate through the form using:
 - Arrow keys to move between fields
 - Enter to select/confirm
-- Space to toggle checkboxes
 - Tab to move between sections
+- Shift-tab to move backwards between sections
 
 The generated configuration will be saved as `bitcoin.conf` in your current directory.
 
@@ -34,7 +36,7 @@ The generated configuration will be saved as `bitcoin.conf` in your current dire
 
 - **Basics**: Core settings like data directory and network selection
 - **RPCs**: RPC server configuration including auth and port settings
-- **General Options**: Advanced settings for Bitcoin Core operation
+- **Reindex**: Warning about reindexing data
 
 ## Development
 
