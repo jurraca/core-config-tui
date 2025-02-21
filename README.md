@@ -1,8 +1,8 @@
 # Bitcoin Core Config Generator
 
-A terminal user interface (TUI) for generating Bitcoin Core configuration files, built with Go using [Charm's Huh](https://github.com/charmbracelet/huh) and [BubbleTea](https://github.com/charmbracelet/bubbletea) libraries.
+A terminal user interface (TUI) for generating Bitcoin Core configuration files, built with Go using Charm's [Huh](https://github.com/charmbracelet/huh) and [BubbleTea](https://github.com/charmbracelet/bubbletea) libraries.
 
-![](demo.webm)
+https://github.com/user-attachments/assets/edc690f8-0427-4bcf-a38c-3ea99a410bae
 
 ## About
 
