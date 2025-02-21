@@ -45,6 +45,10 @@ Built using:
 - [BubbleTea](https://github.com/charmbracelet/bubbletea) for terminal UI
 - [Lipgloss](https://github.com/charmbracelet/lipgloss) for styling
 
+## Accessibility
+
+If using a screen reader, you can enable accessible mode by setting the `ACCESSIBLE=true` environment variable. See BubbleTea [docs](https://github.com/charmbracelet/huh?tab=readme-ov-file#accessibility).
+
 ## License
 
 This project is open source and available under the MIT License.

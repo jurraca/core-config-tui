@@ -135,6 +135,7 @@ func NewModel() Model {
 	m := Model{width: maxWidth}
 	m.lg = lipgloss.DefaultRenderer()
 	m.styles = NewStyles(m.lg)
+	accessibleMode := os.Getenv("ACCESSIBLE") != ""
 
 	m.form = huh.NewForm(
 		huh.NewGroup(
@@ -290,6 +291,7 @@ func NewModel() Model {
 				Value(&cfg.ReindexChainstate),
 		).WithHideFunc(func() bool { return !maybeReindex }),
 	).WithWidth(55).
+		WithAccessible(accessibleMode).
 		WithShowHelp(false).
 		WithShowErrors(false)
 	return m
